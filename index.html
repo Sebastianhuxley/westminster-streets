@@ -243,7 +243,7 @@ function buildEnv(e){const es=new THREE.Scene();const sg=new THREE.SphereGeometr
  sg.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));const mm=new THREE.MeshBasicMaterial({side:THREE.BackSide,vertexColors:true});es.add(new THREE.Mesh(sg,mm));const rt=pmrem.fromScene(es,0.04);if(envRT)envRT.dispose();envRT=rt;scene.environment=rt.texture;sg.dispose();mm.dispose();}
 const ENV={day:{z:0x4a78c0,h:0xc9d1d9,g:0x6a665e,s:[6,5.2,4],k:.5},dusk:{z:0x34407a,h:0xe39a72,g:0x3a3030,s:[6,3,1.4],k:.6},night:{z:0x070a14,h:0x2a2228,g:0x0c0c10,s:[.4,.45,.6],k:.2}};
 buildEnv(ENV.day);
-const hemi=new THREE.HemisphereLight(lin(0xdce8ff),lin(0x8c8070),0.32);scene.add(hemi);const skyFill=new THREE.AmbientLight(lin(0xc4d2e8),0);scene.add(skyFill);
+const hemi=new THREE.HemisphereLight(lin(0xdce8ff),lin(0x8c8070),0.32);scene.add(hemi);const skyFill=new THREE.AmbientLight(lin(0xaec6ec),0);scene.add(skyFill);
 const sun=new THREE.DirectionalLight(lin(0xfff0dc),3.0);sun.castShadow=true;
 // unshadowed share of the sun: stands in for sky and bounce light so shadows read as shade, not black holes
 const sunFill=new THREE.DirectionalLight(lin(0xfff0dc),0);scene.add(sunFill);
@@ -5264,7 +5264,7 @@ function recycle(){const P=focusPos();for(const c of cars){if(c.driver==='player
  for(const p of peds)if(!p.fixed&&Math.hypot(p.pos.x-P.x,p.pos.z-P.z)>200)placePed(p,70,170);
  const extra=cars.filter(c=>c.police&&!c.chase&&c.driver==='ai');if(extra.length>3){const c=extra.find(c=>Math.hypot(c.pos.x-P.x,c.pos.z-P.z)>250);if(c){scene.remove(c.g);cars.splice(cars.indexOf(c),1);}}}
 const tmpV=new V3();
-const TOD={day:{sun:[.28,.4,.87],sc:0xfff0d8,si:3.6,hs:0xcfe0ff,hg:0x8a7a66,hi:.3,fog:0xbcc7d3,fn:120,ff:1250,exp:.74,env:.5,bl:[.16,.4,.9],gr:[.97,1.05,.22],flood:0,win:0,lamp:.25,dial:.12,lan:.25,dusk:0,night:0},
+const TOD={day:{sun:[.28,.4,.87],sc:0xffe9cc,si:4.3,hs:0xb6cff5,hg:0x8a7a66,hi:.34,fog:0xb4c3d6,fn:170,ff:1400,exp:.72,env:.55,bl:[.18,.4,.88],gr:[1.1,1.12,.26],flood:0,win:0,lamp:.25,dial:.12,lan:.25,dusk:0,night:0},
  dusk:{sun:[-.8,.12,.42],sc:0xff9658,si:2.6,hs:0x9aa6d6,hg:0x6a5048,hi:.3,bl:[.45,.55,.72],gr:[1.02,1.06,.3],fog:0xc49c88,fn:220,ff:1300,exp:1.05,env:.42,flood:.35,win:.25,lamp:1.6,dial:1.7,lan:1.6,dusk:1,night:0},
  night:{sun:[.3,.75,-.55],sc:0xa4b6ff,si:.32,hs:0x3a4a78,hg:0x1a1a22,hi:.22,bl:[.6,.5,.72],gr:[1.02,1.08,.4],fog:0x3a2a26,fn:160,ff:1150,exp:1.3,env:.16,flood:.72,win:.65,lamp:3.2,dial:1.5,lan:3.2,dusk:0,night:1}};
 let todName='day';
@@ -5289,7 +5289,7 @@ function autoTOD(){const d=new Date(),N=Math.floor((d-new Date(d.getFullYear(),0
  const H=Math.acos(Math.max(-1,Math.min(1,(Math.sin(-.833*PI/180)-Math.sin(lat)*Math.sin(dec))/(Math.cos(lat)*Math.cos(dec)))))*180/PI/15;
  const B=2*PI*(N-81)/364,eot=(9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B))/60,noon=12+.13/15*4-eot,rise=noon-H,set=noon+H;
  const u=d.getUTCHours()+d.getUTCMinutes()/60;if(u>rise+.6&&u<set-.6)return 'day';if(u>rise-.7&&u<set+.7)return 'dusk';return 'night';}
-function setTOD(n){todName=n;GCLK={t:performance.now(),s:{day:11*3600,dusk:16*3600+900,night:21*3600+1800}[n]};try{lastHM='';drawClock();}catch(e){}skyFill.intensity=n==='day'?.42:n==='dusk'?.26:.06;capPos.set(1e9,0,0);const p=TOD[n];SUN.set(p.sun[0],p.sun[1],p.sun[2]).normalize();buildEnv(ENV[n]);if(bloom){bloom.strength=p.bl[0]*(LOWQ?.6:1);bloom.radius=p.bl[1]*(LOWQ?.6:1);bloom.threshold=p.bl[2]+(LOWQ?.05:0);}if(grade){grade.uniforms.sat.value=p.gr[0];grade.uniforms.con.value=p.gr[1];grade.uniforms.vig.value=p.gr[2];}sun.color.copy(lin(p.sc));sun.intensity=p.si;hemi.color.copy(lin(p.hs));hemi.groundColor.copy(lin(p.hg));hemi.intensity=p.hi;
+function setTOD(n){todName=n;GCLK={t:performance.now(),s:{day:11*3600,dusk:16*3600+900,night:21*3600+1800}[n]};try{lastHM='';drawClock();}catch(e){}skyFill.intensity=n==='day'?.36:n==='dusk'?.26:.06;capPos.set(1e9,0,0);const p=TOD[n];SUN.set(p.sun[0],p.sun[1],p.sun[2]).normalize();buildEnv(ENV[n]);if(bloom){bloom.strength=p.bl[0]*(LOWQ?.6:1);bloom.radius=p.bl[1]*(LOWQ?.6:1);bloom.threshold=p.bl[2]+(LOWQ?.05:0);}if(grade){grade.uniforms.sat.value=p.gr[0];grade.uniforms.con.value=p.gr[1];grade.uniforms.vig.value=p.gr[2];}sun.color.copy(lin(p.sc));sun.intensity=p.si;hemi.color.copy(lin(p.hs));hemi.groundColor.copy(lin(p.hg));hemi.intensity=p.hi;
  scene.fog.color.copy(lin(p.fog));scene.fog.near=p.fn;scene.fog.far=p.ff;renderer.toneMappingExposure=p.exp;skyMat.uniforms.dusk.value=p.dusk;skyMat.uniforms.night.value=p.night;
  scene.traverse(o=>{const ms=Array.isArray(o.material)?o.material:o.material?[o.material]:[];for(const m of ms)if(m.isMeshStandardMaterial&&!m.userData.capEnv){if(m.userData.env==null)m.userData.env=m.envMapIntensity;m.envMapIntensity=m.userData.env*p.env;}});
  for(const k of ['bbPanel','bbAshlar','bbArcade','bbGranite'])MAT[k].emissiveIntensity=p.flood*1.05;for(const k of ['gothic','abbey','abAshlar'])MAT[k].emissiveIntensity=p.flood*.75;for(const k of ['paAshlar','paRustic','parapetP','pPanel','frieze'])MAT[k].emissiveIntensity=p.flood*.55;
@@ -5380,6 +5380,40 @@ const GradeShader={uniforms:{tDiffuse:{value:null},sat:{value:1.08},con:{value:1
  vec3 toS(vec3 c){return mix(c*12.92,1.055*pow(c,vec3(1./2.4))-.055,step(vec3(.0031308),c));}
  void main(){vec3 c=toS(max(texture2D(tDiffuse,vUv).rgb,0.));float l=dot(c,vec3(.2126,.7152,.0722));c=mix(vec3(l),c,sat);c=(c-.5)*con+.5;c=c*gain+lift*(1.-c);
  float d=length((vUv-.5)*vec2(1.15,1.));c*=1.-vig*smoothstep(.3,.95,d);gl_FragColor=vec4(clamp(c,0.,1.),1.);}`};
+
+/* ---- surface relief: derive normal maps from every tiling texture that lacks one ---- */
+function enhanceSurfaces(){const SKIP=/^(frieze|shopF|shopW|vBasket|flowerR|lstSpand|valance|road|roadJ|roadRed|tactR|tactB|escD)$/;const INV=/^(brk|stock|red$|dark$|rtile|brkT|brkW|stucco)/;
+ const CAP=LOWQ?256:1024,jobs=[];
+ const mk=(k,m)=>{const t=m.map,im=t.image;if(!im||!(im.width>0))return false;let w=im.width,h=im.height;while(w>CAP||h>CAP){w>>=1;h>>=1;}if(w<16||h<16)return true;
+  const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');g.drawImage(im,0,0,w,h);const d=g.getImageData(0,0,w,h),a=d.data,L=new Float32Array(w*h);
+  for(let i=0,j=0;i<a.length;i+=4,j++)L[j]=(a[i]*.3+a[i+1]*.59+a[i+2]*.11)/255;
+  // high-pass so broad colour changes don't read as slopes
+  const B=new Float32Array(w*h),r=Math.max(2,w>>6);for(let y=0;y<h;y++){let acc=0;for(let x=-r;x<=r;x++)acc+=L[y*w+((x+w)%w)];for(let x=0;x<w;x++){B[y*w+x]=acc/(2*r+1);acc+=L[y*w+((x+r+1)%w)]-L[y*w+((x-r+w)%w)];}}
+  const inv=INV.test(k)?-1:1,str=(INV.test(k)?5.5:3.2)*(w/512);
+  const o=g.createImageData(w,h),q=o.data;const H=(x,y)=>{x=(x+w)%w;y=(y+h)%h;const i=y*w+x;return (L[i]-B[i]*.85)*inv;};
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const dx=(H(x+1,y-1)+2*H(x+1,y)+H(x+1,y+1))-(H(x-1,y-1)+2*H(x-1,y)+H(x-1,y+1)),dy=(H(x-1,y+1)+2*H(x,y+1)+H(x+1,y+1))-(H(x-1,y-1)+2*H(x,y-1)+H(x+1,y-1));
+   let nx=-dx*str,ny=dy*str,nz=1;const l=Math.hypot(nx,ny,nz);const i=(y*w+x)*4;q[i]=(nx/l*.5+.5)*255;q[i+1]=(ny/l*.5+.5)*255;q[i+2]=(nz/l*.5+.5)*255;q[i+3]=255;}
+  g.putImageData(o,0,0);const n=new THREE.CanvasTexture(c);n.wrapS=t.wrapS;n.wrapT=t.wrapT;n.repeat.copy(t.repeat);n.offset.copy(t.offset);n.anisotropy=ANISO;
+  m.normalMap=n;m.normalScale=new THREE.Vector2(INV.test(k)?1:.7,INV.test(k)?1:.7);m.needsUpdate=true;return true;};
+ for(const k in MAT){const m=MAT[k];if(!m||!m.isMeshStandardMaterial||!m.map||m.normalMap||m.bumpMap||SKIP.test(k)||m.map.wrapS!==THREE.RepeatWrapping||m.transparent||m.alphaTest>0)continue;jobs.push([k,m]);}
+ let tries=0;const step=()=>{const t0=performance.now();while(jobs.length&&performance.now()-t0<25){const [k,m]=jobs[0];let ok=false;try{ok=mk(k,m);}catch(e){ok=true;}if(ok)jobs.shift();else{jobs.push(jobs.shift());if(++tries>jobs.length*40){jobs.length=0;}break;}}if(jobs.length)setTimeout(step,30);};setTimeout(step,50);}
+/* ---- contact-hardening sun shadows: sharp where an object meets the ground, softening with distance like real sunlight ---- */
+function softSunShadows(){if(LOWQ)return;const C=THREE.ShaderChunk;if(C.shadowmap_pars_fragment.includes('pcssSun'))return;
+ const fn=`
+	vec2 pcssPD(int i){ if(i==0)return vec2(-.94,-.40);if(i==1)return vec2(.95,-.77);if(i==2)return vec2(-.09,-.93);if(i==3)return vec2(.34,.29);if(i==4)return vec2(-.92,.46);if(i==5)return vec2(-.24,.97);if(i==6)return vec2(-.81,-.88);if(i==7)return vec2(-.38,.28);
+	 if(i==8)return vec2(.97,.76);if(i==9)return vec2(.44,-.97);if(i==10)return vec2(.54,.76);if(i==11)return vec2(-.26,-.42);if(i==12)return vec2(-.80,.14);if(i==13)return vec2(.20,.79);if(i==14)return vec2(.79,.19);return vec2(-.53,-.11);}
+	float pcssSun( sampler2D sm, vec4 sc, vec2 msz ){
+		float a=rand(gl_FragCoord.xy)*6.2832; mat2 R=mat2(cos(a),sin(a),-sin(a),cos(a));
+		float sr=0.0075, sumB=0.0, nB=0.0;
+		for(int i=0;i<16;i++){ float d=unpackRGBAToDepth(texture2D(sm, sc.xy+R*pcssPD(i)*sr)); if(d<sc.z){sumB+=d;nB+=1.0;} }
+		if(nB<0.5) return 1.0;
+		float distW=(sc.z-sumB/nB)*899.0;
+		float pen=clamp(distW*0.0093*1.7/220.0, 1.2/msz.x, 0.011);
+		float s=0.0; for(int i=0;i<16;i++){ s+=texture2DCompare(sm, sc.xy+R*pcssPD(i)*pen, sc.z); }
+		return s/16.0;
+	}
+	float getShadow(`;
+ C.shadowmap_pars_fragment=C.shadowmap_pars_fragment.replace('float getShadow(',fn).replace('if ( frustumTest ) {','if ( frustumTest ) {\n\t\tif ( shadowMapSize.x > 3000.0 ) return pcssSun( shadowMap, shadowCoord, shadowMapSize );');}
 function setupPost(){try{if(!THREE.EffectComposer||!THREE.UnrealBloomPass||!THREE.ShaderPass||!THREE.RenderPass)return;
  composer=new THREE.EffectComposer(renderer);composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(innerWidth,innerHeight);
  rpass=new THREE.RenderPass(scene,camera);composer.addPass(rpass);
@@ -5436,9 +5470,9 @@ document.querySelectorAll('[data-wx]').forEach(b=>b.addEventListener('click',()=
 function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-(last||now))/1000);last=now;if(state!=='pause'&&state!=='ride')update(dt);
  if(ssao&&ssao.enabled&&state!=='title'){perfN++;perfT+=dt;if(perfN===180){if(perfT/180>.034)setSSAO(false);}}
  const half=(state==='view'||state==='title')?90:150;if(SC.right!==half){SC.left=SC.bottom=-half;SC.right=SC.top=half;SC.updateProjectionMatrix();}
- updateBounce();updateRiverRefl();updateWX(dt);updateInt(dt);try{updateProtests(performance.now()/1000);updateSpeech(dt);}catch(e){}sunFill.color.copy(sun.color);sunFill.intensity=sun.intensity*.3;sun.intensity*=.78;sunFill.position.copy(sun.position).sub(sun.target.position);updateGrass();if(beacon&&beacon.visible){const F=focusPos(),d=Math.hypot(F.x-beacon.position.x,F.z-beacon.position.z);beacon.material.uniforms.uOp.value=.95*Math.min(1,Math.max(.12,(d-12)/60));}if(state==='cast'){castUpdate(dt);renderer.render(castScene,castCam);}else if(composer)composer.render();else renderer.render(scene,camera);}
+ updateBounce();updateRiverRefl();updateWX(dt);updateInt(dt);try{updateProtests(performance.now()/1000);updateSpeech(dt);}catch(e){}sunFill.color.copy(sun.color);sunFill.intensity=sun.intensity*(todName==='day'?.13:.3);sun.intensity*=.78;sunFill.position.copy(sun.position).sub(sun.target.position);updateGrass();if(beacon&&beacon.visible){const F=focusPos(),d=Math.hypot(F.x-beacon.position.x,F.z-beacon.position.z);beacon.material.uniforms.uOp.value=.95*Math.min(1,Math.max(.12,(d-12)/60));}if(state==='cast'){castUpdate(dt);renderer.render(castScene,castCam);}else if(composer)composer.render();else renderer.render(scene,camera);}
 function init(){
- buildWorld();contactAO();setupPost();eyeWheel=eye();boats=[boat(120,-500,1),boat(200,200,-1),boat(160,-80,1)];applyCityAO();setupRiverRefl();setupWeather();setupInteriors();setupGrass();try{photoDetail();}catch(e){console.warn('photoDetail',e);}try{const t='day';setTOD(t);document.querySelectorAll('[data-tod2]').forEach(b=>b.classList.toggle('on',b.dataset.tod2===t));document.querySelectorAll('[data-tod]').forEach(b=>b.classList.toggle('on',b.dataset.tod===t));}catch(e){}tideBands();setTimeout(applyCityAO,4000);makeBeacon();spawnAgents();npcInit(npcUpgrade);drawMap();sizeMini();window.POIS=Object.values(PLACES).map(q=>[q[0].replace(/^the /,''),q[1],q[2]]).concat([['Westminster station',20,-176,'#4aa3ff'],['Parliament Sq exit',-5,-133,'#4aa3ff'],['Supreme Court',-150,-127],['Central Hall',-224,-127],['Victoria Memorial',-664,-560],['Green Park',-523,-715],['Leicester Square',-337,-1205,'#ff7ab0'],['Chinatown',-360,-1324,'#ff7ab0'],['Soho',-400,-1520,'#ff7ab0'],['Leicester Square station',-205,-1320,'#4aa3ff'],['Gloucester Road station',-3990,565,'#4aa3ff'],['Kensington Palace',-4360,-705],['Round Pond',-4150,-706],['Liverpool Street station',2990,-2016,'#4aa3ff']]);
+ try{softSunShadows();}catch(e){console.warn('pcss',e);}buildWorld();contactAO();setupPost();try{enhanceSurfaces();}catch(e){console.warn('relief',e);}eyeWheel=eye();boats=[boat(120,-500,1),boat(200,200,-1),boat(160,-80,1)];applyCityAO();setupRiverRefl();setupWeather();setupInteriors();setupGrass();try{photoDetail();}catch(e){console.warn('photoDetail',e);}try{const t='day';setTOD(t);document.querySelectorAll('[data-tod2]').forEach(b=>b.classList.toggle('on',b.dataset.tod2===t));document.querySelectorAll('[data-tod]').forEach(b=>b.classList.toggle('on',b.dataset.tod===t));}catch(e){}tideBands();setTimeout(applyCityAO,4000);makeBeacon();spawnAgents();npcInit(npcUpgrade);drawMap();sizeMini();window.POIS=Object.values(PLACES).map(q=>[q[0].replace(/^the /,''),q[1],q[2]]).concat([['Westminster station',20,-176,'#4aa3ff'],['Parliament Sq exit',-5,-133,'#4aa3ff'],['Supreme Court',-150,-127],['Central Hall',-224,-127],['Victoria Memorial',-664,-560],['Green Park',-523,-715],['Leicester Square',-337,-1205,'#ff7ab0'],['Chinatown',-360,-1324,'#ff7ab0'],['Soho',-400,-1520,'#ff7ab0'],['Leicester Square station',-205,-1320,'#4aa3ff'],['Gloucester Road station',-3990,565,'#4aa3ff'],['Kensington Palace',-4360,-705],['Round Pond',-4150,-706],['Liverpool Street station',2990,-2016,'#4aa3ff']]);
  player.m.g.position.copy(player.pos);player.m.g.rotation.y=player.h;
  $('loading').textContent='Big Ben is ready.';$('play').disabled=false;$('playBB').disabled=false;$('playCast').disabled=false;requestAnimationFrame(loop);}
 $('playBB').addEventListener('click',()=>{$('play').click();enterView();vcam.yaw=.9;vcam.r=60;bigT=0;$('big').style.opacity=0;});
