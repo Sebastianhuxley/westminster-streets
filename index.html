@@ -148,7 +148,7 @@ body.touch #bMenu{top:calc(212px + env(safe-area-inset-top));padding:6px 14px}
  <button id="pResume">Resume</button>
  <div class="lbl">Time of day</div><div class="seg"><button data-tod2="day">Day</button><button data-tod2="dusk">Dusk</button><button data-tod2="night">Night</button></div>
  <div class="lbl">Weather</div><div class="seg"><button data-wx="dry" class="on">Dry</button><button data-wx="cloudy">Grey</button><button data-wx="drizzle">Drizzle</button><button data-wx="rain">Rain</button></div>
- <div class="lbl">Explore</div><button id="pMap">Map of London <span style="opacity:.6">(M)</span></button><button id="pBB">Big Ben close-up <span style="opacity:.6">(B)</span></button><button id="pGo">Go to a place… <span style="opacity:.6">(G)</span></button>
+ <div class="lbl">Explore</div><button id="pSharp" style="display:none"></button><button id="pMap">Map of London <span style="opacity:.6">(M)</span></button><button id="pBB">Big Ben close-up <span style="opacity:.6">(B)</span></button><button id="pGo">Go to a place… <span style="opacity:.6">(G)</span></button>
  <div class="lbl">Graphics</div><div class="seg"><button data-q="hi">High</button><button data-q="lo">Fast</button></div>
  <div class="lbl">Controls</div><table><tr><td>Move / drive</td><td>WASD or arrows</td></tr><tr><td>Sprint</td><td>Shift</td></tr><tr><td>Get in / out · board train</td><td>E</td></tr><tr><td>Handbrake</td><td>Space</td></tr><tr><td>Horn</td><td>H</td></tr><tr><td>Map</td><td>M</td></tr><tr><td>Pause</td><td>Esc or P</td></tr><tr><td>Look around</td><td>Drag</td></tr></table></div></div>
 <div id="bigmap" class="ovl" role="dialog" aria-label="Map"><div class="mwrap"><canvas id="bmc"></canvas><div class="mt">Westminster <span id="bmSub">You are the red arrow · drag to pan</span></div><button id="bmClose">Close</button></div></div>
@@ -204,8 +204,10 @@ const pickS=a=>a[Math.floor(rnd()*a.length)];
 const lin=h=>new THREE.Color(h).convertSRGBToLinear();
 
 /* ---------- renderer ---------- */
+// Sharp mode for phones: double resolution and 4x multisampling. If a Sharp start ever fails to reach play, fall back automatically.
+let SHARP=false,SHARP_AUTO_OFF=false;try{if(TOUCH){SHARP=localStorage.getItem('wsSharp')!=='0';if(SHARP&&localStorage.getItem('wsBoot')==='1'){SHARP=false;SHARP_AUTO_OFF=true;localStorage.setItem('wsSharp','0');}if(SHARP)localStorage.setItem('wsBoot','1');}}catch(e){}
 const renderer=new THREE.WebGLRenderer({antialias:!LOWQ,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio||1,LOWQ?1.35:2));
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,LOWQ?(SHARP?2:1.35):2));
 renderer.setSize(innerWidth,innerHeight);
 renderer.outputEncoding=THREE.sRGBEncoding;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.95;
@@ -5415,12 +5417,12 @@ function softSunShadows(){if(LOWQ)return;const C=THREE.ShaderChunk;if(C.shadowma
 	float getShadow(`;
  C.shadowmap_pars_fragment=C.shadowmap_pars_fragment.replace('float getShadow(',fn).replace('if ( frustumTest ) {','if ( frustumTest ) {\n\t\tif ( shadowMapSize.x > 3000.0 ) return pcssSun( shadowMap, shadowCoord, shadowMapSize );');}
 function setupPost(){try{if(!THREE.EffectComposer||!THREE.UnrealBloomPass||!THREE.ShaderPass||!THREE.RenderPass)return;
- composer=new THREE.EffectComposer(renderer);composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(innerWidth,innerHeight);
+ {let rt;if(SHARP&&renderer.capabilities.isWebGL2&&THREE.WebGLMultisampleRenderTarget){rt=new THREE.WebGLMultisampleRenderTarget(innerWidth*renderer.getPixelRatio(),innerHeight*renderer.getPixelRatio(),{minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,format:THREE.RGBAFormat});rt.samples=4;}composer=new THREE.EffectComposer(renderer,rt);}composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(innerWidth,innerHeight);
  rpass=new THREE.RenderPass(scene,camera);composer.addPass(rpass);
  if(!LOWQ&&THREE.SSAOPass&&THREE.SimplexNoise&&renderer.capabilities.isWebGL2){ssao=new THREE.SSAOPass(scene,camera,innerWidth,innerHeight);ssao.kernelRadius=1.5;ssao.minDistance=.00003;ssao.maxDistance=.0022;composer.addPass(ssao);{const ro=ssao.renderOverride.bind(ssao);ssao.renderOverride=(r,m,t,c,a)=>{const vis=NOAO.map(o=>o.visible);for(const o of NOAO)o.visible=false;ro(r,m,t,c,a);NOAO.forEach((o,i)=>o.visible=vis[i]);};}rpass.enabled=false;}
  bloom=new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.18,.4,.88);composer.addPass(bloom);
  grade=new THREE.ShaderPass(GradeShader);composer.addPass(grade);
- if(THREE.FXAAShader){fxaa=new THREE.ShaderPass(THREE.FXAAShader);composer.addPass(fxaa);sizeFXAA();}
+ if(THREE.FXAAShader&&!SHARP){fxaa=new THREE.ShaderPass(THREE.FXAAShader);composer.addPass(fxaa);sizeFXAA();}
  skyMat.uniforms.uLin.value=1;}catch(e){console.warn('post-processing off',e);composer=null;skyMat.uniforms.uLin.value=0;}}
 function sizeFXAA(){if(fxaa){const pr=renderer.getPixelRatio();fxaa.material.uniforms.resolution.value.set(1/(innerWidth*pr),1/(innerHeight*pr));}}
 function setSSAO(on){if(!ssao)return;ssao.enabled=on;rpass.enabled=!on;}
@@ -5462,7 +5464,8 @@ function drawBigMap(){const c=$('bmc'),r=c.getBoundingClientRect(),pr=Math.min(2
  const ax=X(P.x),ay=Z(P.z),h=player.car?player.car.h:player.h;g.save();g.translate(ax,ay);g.rotate(-h+PI);g.fillStyle='#ff3b4f';g.strokeStyle='#fff';g.lineWidth=2*pr;g.beginPath();g.moveTo(0,-11*pr);g.lineTo(8*pr,9*pr);g.lineTo(0,4*pr);g.lineTo(-8*pr,9*pr);g.closePath();g.fill();g.stroke();g.restore();
  g.fillStyle='rgba(255,255,255,.75)';g.textAlign='left';g.fillText('N ↑   100 m',14*pr,H-14*pr);g.fillRect(70*pr,H-24*pr,100*sc,3*pr);}
 {let dr=null;const c=()=>$('bmc');addEventListener('load',()=>{});document.addEventListener('pointerdown',e=>{if(e.target.id==='bmc'){dr=[e.clientX,e.clientY,bmPan.x,bmPan.z];}});document.addEventListener('pointermove',e=>{if(!dr)return;const r=c().getBoundingClientRect(),sc=r.width/900;bmPan.x=dr[2]-(e.clientX-dr[0])/sc;bmPan.z=dr[3]-(e.clientY-dr[1])/sc;drawBigMap();});document.addEventListener('pointerup',()=>dr=null);}
-$('bMenu').addEventListener('click',()=>togglePause());$('bGo').addEventListener('click',e=>{e.stopPropagation();openTravel();});$('pGo').addEventListener('click',()=>openTravel());$('travelX').addEventListener('click',()=>closeTravel());$('tubeX').addEventListener('click',()=>{$('tube').classList.remove('on');state='play';});$('pResume').addEventListener('click',()=>togglePause());$('pMap').addEventListener('click',()=>{toggleMap();});$('bmClose').addEventListener('click',()=>toggleMap());
+$('bMenu').addEventListener('click',()=>togglePause());$('bGo').addEventListener('click',e=>{e.stopPropagation();openTravel();});$('pGo').addEventListener('click',()=>openTravel());$('travelX').addEventListener('click',()=>closeTravel());$('tubeX').addEventListener('click',()=>{$('tube').classList.remove('on');state='play';});$('pResume').addEventListener('click',()=>togglePause());$('pMap').addEventListener('click',()=>{toggleMap();});
+if(TOUCH){const b=$('pSharp');b.style.display='';b.innerHTML='Sharp graphics: <b>'+(SHARP?'ON':'OFF')+'</b> <span style="opacity:.6">(restarts the game)</span>';b.addEventListener('click',()=>{try{localStorage.setItem('wsSharp',SHARP?'0':'1');localStorage.setItem('wsBoot','0');}catch(e){}location.reload();});}$('bmClose').addEventListener('click',()=>toggleMap());
 $('pBB').addEventListener('click',()=>{togglePause();enterView();});
 document.querySelectorAll('[data-tod2]').forEach(b=>b.addEventListener('click',()=>{setTOD(b.dataset.tod2);document.querySelectorAll('[data-tod2]').forEach(x=>x.classList.toggle('on',x===b));}));
 document.querySelectorAll('[data-q]').forEach(b=>b.addEventListener('click',()=>setQuality(b.dataset.q)));
@@ -5480,7 +5483,7 @@ $('playBB').addEventListener('click',()=>{$('play').click();enterView();vcam.yaw
 function showErr(msg){try{let d=document.getElementById('errbox');if(!d){d=document.createElement('div');d.id='errbox';d.style.cssText='position:fixed;left:10px;right:10px;bottom:10px;z-index:99;background:rgba(120,10,20,.92);color:#fff;font:13px/1.35 system-ui,sans-serif;padding:10px 12px;border-radius:10px;white-space:pre-wrap;pointer-events:none';document.body.appendChild(d);}d.textContent=(d.textContent?d.textContent+'\n':'')+String(msg).slice(0,300);}catch(e){}}
 addEventListener('error',e=>showErr('Error: '+(e.message||e)+(e.lineno?' @'+e.lineno:'')));addEventListener('unhandledrejection',e=>showErr('Error: '+(e.reason&&e.reason.message||e.reason)));
 try{renderer.domElement.addEventListener('webglcontextlost',()=>showErr('The graphics memory ran out on this device (WebGL context lost).'));}catch(e){}
-$('play').addEventListener('click',()=>{try{AU.init();AU.c&&AU.c.resume();}catch(e){}$('start').style.display='none';document.body.classList.add('playing');state='play';cam.yaw=player.h+PI;sizeMini();zoneCur='';flash('Westminster','Monday morning, SW1','#fff');try{startStep();}catch(e){showErr('Start failed: '+e.message);}});
+$('play').addEventListener('click',()=>{if(SHARP)setTimeout(()=>{try{localStorage.setItem('wsBoot','0');}catch(e){}},20000);if(SHARP_AUTO_OFF)setTimeout(()=>{try{flash('Sharp graphics off','Your phone struggled — switched back to standard. Turn it on again in MENU.','#fff');}catch(e){}},4500);try{AU.init();AU.c&&AU.c.resume();}catch(e){}$('start').style.display='none';document.body.classList.add('playing');state='play';cam.yaw=player.h+PI;sizeMini();zoneCur='';flash('Westminster','Monday morning, SW1','#fff');try{startStep();}catch(e){showErr('Start failed: '+e.message);}});
 requestAnimationFrame(()=>setTimeout(()=>{try{init();}catch(e){console.error(e);$('loading').textContent='Something went wrong building the city: '+e.message;}},30));
 }
 </script>
