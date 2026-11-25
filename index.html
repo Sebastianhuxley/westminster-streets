@@ -178,6 +178,8 @@ body.touch #bMenu{top:calc(212px + env(safe-area-inset-top));padding:6px 14px}
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/meshopt_decoder.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/SSAOPass.js"></script>
 <script src="a_pdtex.js"></script>
 <script src="a_pdgrass.js"></script>
@@ -4907,11 +4909,14 @@ function placeTraffic(c,minD,maxD){const P=focusPos();for(let k=0;k<40;k++){cons
 function placePed(p,minD,maxD){const P=focusPos();for(let k=0;k<40;k++){const ei=Math.floor(Math.random()*EDGES.length),dir=Math.random()<.5?1:-1;const e=EDGES[ei];const q=edgePoint(ei,rr(.1,.9),dir,0);const side=Math.random()<.5?1:-1;const A=NODES[q.a],B=NODES[q.b];let dx=B[0]-A[0],dz=B[1]-A[1];const l=Math.hypot(dx,dz);dx/=l;dz/=l;const x=q.x+dz*side*(e.w/2+2.5),z=q.z-dx*side*(e.w/2+2.5);const d=Math.hypot(x-P.x,z-P.z);if(d<minD||d>maxD)continue;if(Math.random()>footfall(x,z)&&k<26)continue;if(collideCircleTest(x,z,.4))continue;
   p.pos.set(x,0,z);p.e=ei;p.a=q.a;p.b=q.b;p.side=side;p.state='walk';p.h=q.h;p.m.g.rotation.set(0,p.h,0);return true;}return false;}
 
+
+let DRACO_L=null;function mkGLTF(){const L=new THREE.GLTFLoader();try{if(window.MeshoptDecoder)L.setMeshoptDecoder(MeshoptDecoder);}catch(e){}
+ try{if(THREE.DRACOLoader){if(!DRACO_L){DRACO_L=new THREE.DRACOLoader();DRACO_L.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/draco/gltf/');}L.setDRACOLoader(DRACO_L);}}catch(e){}return L;}
 /* ---- photo-real vehicle models (GLB) ---- */
 const RRA={xc:.041,yc:.016,zc:-.333};var RRT=null;
-function rrLoad(){if(!THREE.GLTFLoader)return;const L=new THREE.GLTFLoader(),got={};
- const done=()=>{if(!got.hi||!got.lo)return;RRT=got;for(const c of cars){if(c.type==='suv'&&(c.vm||'rr')==='rr')try{rrUpgrade(c);}catch(e){console.error(e);}else try{carShade(c.g);}catch(e){}}};
- for(const k of ['hi','lo'])L.load('rr_'+k+'.glb',g=>{const T={body:null,wheel:null,brake:null,wheels:{}};g.scene.updateMatrixWorld(true);
+function rrLoad(){if(!THREE.GLTFLoader)return;const L=mkGLTF(),got={};
+ const done=()=>{if(!got.hi||!got.mid||!got.lo)return;RRT=got;for(const c of cars){if(c.type==='suv'&&(c.vm||'rr')==='rr')try{rrUpgrade(c);}catch(e){console.error(e);}else try{carShade(c.g);}catch(e){}}};
+ for(const k of ['hi','mid','lo'])L.load('rr_'+k+'.glb',g=>{const T={body:null,wheel:null,brake:null,wheels:{}};g.scene.updateMatrixWorld(true);
   g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const m=o.material;if(m&&m.isMeshStandardMaterial&&!m.userData.rrFix)rrFixMat(m);}});
   for(const n of g.scene.children){const nn=n.name.replace(/_/g,' ');if(nn==='Body')T.body=n;else if(nn==='FL Wheel')T.wheel=n;else if(nn==='FL Brake')T.brake=n;}if(!T.body||!T.wheel){console.warn('rr nodes',g.scene.children.map(n=>n.name));return;}
   got[k]=T;done();},undefined,e=>console.warn('rr load',e));}
@@ -4930,7 +4935,7 @@ function carShade(o){o.traverse(k=>{if(!k.isMesh)return;k.receiveShadow=true;con
 const RRHEAD=[];
 function rrFixMat(m){m.userData.rrFix=1;const n=(m.name||'').trim().toLowerCase();let refl=0,env=.7;
  const set=(me,ro)=>{m.metalness=me;m.roughness=ro;};
- if(n==='glass'){set(.05,.06);m.color.setRGB(.035,.04,.045);refl=1.1;if(m.clearcoat!=null)m.clearcoat=0;}
+ if(n==='glass'){set(.05,.05);m.color.setRGB(.02,.025,.03);m.transparent=true;m.opacity=.55;m.depthWrite=false;refl=1.1;if(m.clearcoat!=null)m.clearcoat=0;}
  else if(n==='trasnsparent glass'){set(0,.05);m.depthWrite=false;refl=.9;}
  else if(n==='black metal'){set(.25,.32);m.color.setRGB(.012,.012,.014);env=.6;}
  else if(n==='plastic'){set(.1,.62);env=.45;}
@@ -4952,7 +4957,7 @@ function rrUpgrade(c){if(c.rr||!RRT)return;c.rr=1;const inner=c.body.children[0]
  let paint=null;for(const k of inner.children)if(k.isMesh&&k.visible!==false){paint=k.material;break;}
  for(const k of inner.children)if(k!==c.drv)k.visible=false;
  const lod=new THREE.LOD(),tails=[],heads=[];
- for(const [k,d] of [['hi',0],['lo',LOWQ?22:40]]){const T=RRT[k],B=rrHolder(T.body,paint);const grp=new THREE.Group();grp.add(B.h);
+ for(const [k,d] of [['hi',0],['mid',LOWQ?7:12],['lo',LOWQ?22:40]]){const T=RRT[k],B=rrHolder(T.body,paint);const grp=new THREE.Group();grp.add(B.h);
   B.h.position.set(RRA.zc,-RRA.yc,-RRA.xc);
   for(const m of B.meshes){const nm=m.material.name||'';if(/tail light/i.test(nm))tails.push(m);else if(/head light/i.test(nm))heads.push(m);}lod.addLevel(grp,d);}
  inner.add(lod);c.rrLod=lod;
@@ -4960,7 +4965,7 @@ function rrUpgrade(c){if(c.rr||!RRT)return;c.rr=1;const inner=c.body.children[0]
  const W=[];const fx=1.6073,rx=-1.3301,wy=.4277,zl=-1.1714,zr=.5057;
  for(const [x,z,front] of [[fx,zl,1],[rx,zl,0],[fx,zr,1],[rx,zr,0]]){const hub=new THREE.Group();hub.rotation.order='YXZ';hub.position.copy(rrP(x,wy,z));c.g.add(hub);
   const spin=new THREE.Group();hub.add(spin);const right=z>RRA.zc;const wl=new THREE.LOD();
-  for(const [k,d] of [['hi',0],['lo',LOWQ?16:30]]){const T=RRT[k];const h=new THREE.Group();h.rotation.y=-PI/2;const o=T.wheel.clone();o.position.set(0,0,0);if(right){o.rotation.y+=PI;}h.add(o);wl.addLevel(h,d);}
+  for(const [k,d] of [['hi',0],['mid',LOWQ?6:10],['lo',LOWQ?16:30]]){const T=RRT[k];const h=new THREE.Group();h.rotation.y=-PI/2;const o=T.wheel.clone();o.position.set(0,0,0);if(right){o.rotation.y+=PI;}h.add(o);wl.addLevel(h,d);}
   spin.add(wl);
   if(front&&RRT.hi.brake){const h=new THREE.Group();h.rotation.y=-PI/2;const o=RRT.hi.brake.clone();o.position.set(0,0,0);if(right)o.rotation.y+=PI;h.add(o);hub.add(h);}
   W.push({hub,spin,rim:new THREE.Object3D(),front:!!front});}
@@ -4976,7 +4981,8 @@ const VEHT={},VEHQ={};let VEHMAT=null;
 function vehMats(){if(VEHMAT)return VEHMAT;const P=(o)=>{const m=new THREE.MeshPhysicalMaterial(o);return m;};
  VEHMAT={trim:P({color:lin(0x0a0a0b),metalness:.15,roughness:.42,clearcoat:.3,clearcoatRoughness:.2}),
   chrome:new THREE.MeshStandardMaterial({color:lin(0xd0d3d6),metalness:1,roughness:.12}),
-  glass:P({color:lin(0x0b0d10),metalness:.05,roughness:.04,clearcoat:1,clearcoatRoughness:.02}),
+  glass:P({color:lin(0x0b0d10),metalness:.05,roughness:.03,clearcoat:1,clearcoatRoughness:.02,transparent:true,opacity:.5,depthWrite:false}),
+  interior:P({color:lin(0x1c1916),metalness:0,roughness:.62,sheen:new THREE.Color(.05,.05,.05)}),
   head:new THREE.MeshStandardMaterial({color:lin(0xc8ccd0),metalness:.85,roughness:.12,emissive:new THREE.Color(1,.97,.9),emissiveIntensity:0}),
   plate:new THREE.MeshStandardMaterial({color:lin(0xe8e6de),roughness:.55}),
   tyre:new THREE.MeshStandardMaterial({color:lin(0x18191a),roughness:.88,metalness:0}),
@@ -4985,10 +4991,10 @@ function vehMats(){if(VEHMAT)return VEHMAT;const P=(o)=>{const m=new THREE.MeshP
  for(const k in VEHMAT){const m=VEHMAT[k];if(m.userData.env0==null){m.userData.env=.6;}}
  return VEHMAT;}
 function vehLoad(key,cb){if(VEHT[key])return cb(VEHT[key]);if(VEHQ[key]){VEHQ[key].push(cb);return;}VEHQ[key]=[cb];
- if(!THREE.GLTFLoader)return;const L=new THREE.GLTFLoader(),got={};
- for(const lv of ['hi','lo'])L.load('veh_'+key+'_'+lv+'.glb',g=>{const S={body:null,W:{},C:{}};
+ if(!THREE.GLTFLoader)return;const L=mkGLTF(),got={};
+ for(const lv of ['hi','mid','lo'])L.load('veh_'+key+'_'+lv+'.glb',g=>{const S={body:null,W:{},C:{},X:(g.parser&&g.parser.json&&g.parser.json.extras)||{}};
    for(const n of g.scene.children){const nm=n.name.replace(/_/g,' ').trim();if(nm==='body')S.body=n;else if(/^W /.test(nm))S.W[nm.slice(2)]=n;else if(/^C /.test(nm))S.C[nm.slice(2)]=n;}
-   got[lv]=S;if(got.hi&&got.lo){VEHT[key]=got;for(const f of VEHQ[key])try{f(got);}catch(e){console.error(e);}VEHQ[key]=[];}},undefined,e=>console.warn('veh',key,e));}
+   got[lv]=S;if(got.hi&&got.mid&&got.lo){VEHT[key]=got;for(const f of VEHQ[key])try{f(got);}catch(e){console.error(e);}VEHQ[key]=[];}},undefined,e=>console.warn('veh',key,e));}
 function vehCat(m){const n=(m&&m.name)||'';return n.indexOf('cat:')===0?n.slice(4):null;}
 function vehUpgrade(c,key,T){if(c.vk)return;c.vk=key;const cfg=VEHM[key]||{},M=vehMats(),inner=c.body.children[0];
  let paint=null;for(const k of inner.children)if(k.isMesh&&k.visible!==false){paint=k.material;break;}
@@ -4997,13 +5003,13 @@ function vehUpgrade(c,key,T){if(c.vk)return;c.vk=key;const cfg=VEHM[key]||{},M=v
   cfg._cal=new THREE.MeshStandardMaterial({color:lin(cfg.cal||0x222222),metalness:.3,roughness:.35});}
  const tails=[];const matFor=(m)=>{const k=vehCat(m);if(k==='paint')return paint||M.trim;if(k==='tail')return tailOff;if(k==='rim')return cfg._rim;if(k==='caliper')return cfg._cal;return M[k]||M.trim;};
  const dress=(o)=>{o.traverse(k=>{if(!k.isMesh)return;const cat=vehCat(k.material);k.material=matFor(k.material);k.castShadow=true;k.receiveShadow=true;if(cat==='tail')tails.push(k);});return o;};
- const lod=new THREE.LOD();for(const [lv,d] of [['hi',0],['lo',LOWQ?22:40]]){const b=T[lv].body.clone();b.position.set(0,0,0);dress(b);lod.addLevel(b,d);}
+ const lod=new THREE.LOD();for(const [lv,d] of [['hi',0],['mid',LOWQ?7:12],['lo',LOWQ?22:40]]){const b=T[lv].body.clone();dress(b);lod.addLevel(b,d);}
  inner.add(lod);
  for(const w of c.wheels)c.g.remove(w.hub);
- const W=[];for(const q of ['FL','FR','RL','RR']){const src=T.hi.W[q];if(!src)continue;const hub=new THREE.Group();hub.rotation.order='YXZ';hub.position.copy(src.position);c.g.add(hub);
+ const W=[];for(const q of ['FL','FR','RL','RR']){const src=T.hi.W[q];if(!src)continue;const wx=T.hi.X.wheels&&T.hi.X.wheels[q];const cen=wx?new THREE.Vector3().fromArray(wx.c):src.position.clone();const hub=new THREE.Group();hub.rotation.order='YXZ';hub.position.copy(cen);c.g.add(hub);
   const spin=new THREE.Group();hub.add(spin);const wl=new THREE.LOD();
-  for(const [lv,d] of [['hi',0],['lo',LOWQ?16:30]]){const o=T[lv].W[q].clone();o.position.set(0,0,0);dress(o);wl.addLevel(o,d);}spin.add(wl);
-  if(T.hi.C[q]){const o=T.hi.C[q].clone();o.position.set(0,0,0);dress(o);hub.add(o);}
+  for(const [lv,d] of [['hi',0],['mid',LOWQ?6:10],['lo',LOWQ?16:30]]){const o=T[lv].W[q].clone();o.position.sub(cen);dress(o);wl.addLevel(o,d);}spin.add(wl);
+  if(T.hi.C[q]){const o=T.hi.C[q].clone();o.position.sub(cen);dress(o);hub.add(o);}
   W.push({hub,spin,rim:new THREE.Object3D(),front:q[0]==='F'});}
  c.wheels=W;
  c.tail={set material(m){for(const t of tails)t.material=m;const hi=todName==='day'?0:todName==='dusk'?1.6:2.6;if(RRHEAD.length&&RRHEAD[0].emissiveIntensity!==hi)for(const h of RRHEAD)h.emissiveIntensity=hi;}};
