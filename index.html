@@ -115,6 +115,10 @@ body.touch #bMenu{top:calc(212px + env(safe-area-inset-top));padding:6px 14px}
 .pbox #pResume{background:#c8102e;border-color:#c8102e;text-align:center}
 .pbox table{width:100%;border-collapse:collapse;font-size:16px}.pbox td{padding:3px 0;border-bottom:1px solid rgba(255,255,255,.08)}.pbox td:first-child{opacity:.7;width:42%}
 #bGo{position:fixed;z-index:3;right:calc(14px + env(safe-area-inset-right));top:calc(266px + env(safe-area-inset-top));font:700 15px 'Barlow Condensed',sans-serif;letter-spacing:1px;color:#fff;background:rgba(12,12,14,.6);border:2px solid rgba(255,255,255,.55);border-radius:22px;padding:6px 14px;min-height:44px;cursor:pointer}
+#mp .pbox{max-width:420px;width:92vw}#mp input{width:100%;box-sizing:border-box;font-size:18px;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;margin:6px 0 10px}
+#mp .code{font:800 40px/1.1 system-ui,sans-serif;letter-spacing:.18em;text-align:center;margin:10px 0 4px;color:#ffd27a}#mp .row{display:flex;gap:8px}#mp .row button{flex:1}#mp .note{font-size:13px;opacity:.7;margin:6px 0 10px;line-height:1.35}
+#mpChip{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top) + 8px);z-index:5;display:none;background:rgba(10,12,16,.6);color:#fff;font:700 13px system-ui,sans-serif;padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);pointer-events:auto}
+#mpToast{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top) + 44px);z-index:7;max-width:86vw;background:rgba(10,12,16,.78);color:#fff;font:600 15px system-ui,sans-serif;padding:9px 14px;border-radius:12px;opacity:0;transition:opacity .3s;pointer-events:none;text-align:center}
 #travel .pbox{max-height:86vh;overflow-y:auto;-webkit-overflow-scrolling:touch}#travel .tg{display:grid;grid-template-columns:1fr 1fr;gap:8px}#travel .tg button{text-align:left;font-size:16px;padding:10px 12px;line-height:1.15}#travel .tg button small{display:block;font-size:12px;opacity:.65;font-weight:500;margin-top:2px}
 #tubeList button{display:flex;flex-direction:column;gap:2px}#tubeList button b{font-size:21px}#tubeList button span{font-size:15px;opacity:.85;font-weight:500}#tubeList i{display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:4px;vertical-align:-2px}
 #ride{background:#040506;backdrop-filter:none}#ride .rbox{text-align:center}#ride .rl{font-size:18px;letter-spacing:2px;opacity:.7;text-transform:uppercase}#ride .rn{margin-top:18px;font-size:22px;opacity:.85}#ride .rs{font:italic 800 clamp(40px,8vw,76px)/1.05 'Playfair Display',Georgia,serif;color:#fff}
@@ -148,10 +152,18 @@ body.touch #bMenu{top:calc(212px + env(safe-area-inset-top));padding:6px 14px}
  <button id="pResume">Resume</button>
  <div class="lbl">Time of day</div><div class="seg"><button data-tod2="day">Day</button><button data-tod2="dusk">Dusk</button><button data-tod2="night">Night</button></div>
  <div class="lbl">Weather</div><div class="seg"><button data-wx="dry" class="on">Dry</button><button data-wx="cloudy">Grey</button><button data-wx="drizzle">Drizzle</button><button data-wx="rain">Rain</button></div>
- <div class="lbl">Explore</div><button id="pSharp" style="display:none"></button><button id="pMap">Map of London <span style="opacity:.6">(M)</span></button><button id="pBB">Big Ben close-up <span style="opacity:.6">(B)</span></button><button id="pGo">Go to a place… <span style="opacity:.6">(G)</span></button>
+ <div class="lbl">Explore</div><button id="pSharp" style="display:none"></button><button id="pMap">Map of London <span style="opacity:.6">(M)</span></button><button id="pBB">Big Ben close-up <span style="opacity:.6">(B)</span></button><button id="pMP">Play with friends 👥</button><button id="pGo">Go to a place… <span style="opacity:.6">(G)</span></button>
  <div class="lbl">Graphics</div><div class="seg"><button data-q="hi">High</button><button data-q="lo">Fast</button></div>
  <div class="lbl">Controls</div><table><tr><td>Move / drive</td><td>WASD or arrows</td></tr><tr><td>Sprint</td><td>Shift</td></tr><tr><td>Get in / out · board train</td><td>E</td></tr><tr><td>Handbrake</td><td>Space</td></tr><tr><td>Horn</td><td>H</td></tr><tr><td>Map</td><td>M</td></tr><tr><td>Pause</td><td>Esc or P</td></tr><tr><td>Look around</td><td>Drag</td></tr></table></div></div>
 <div id="bigmap" class="ovl" role="dialog" aria-label="Map"><div class="mwrap"><canvas id="bmc"></canvas><div class="mt">Westminster <span id="bmSub">You are the red arrow · drag to pan</span></div><button id="bmClose">Close</button></div></div>
+<div id="mp" class="ovl" role="dialog" aria-label="Play with friends"><div class="pbox"><h2>Play with friends</h2>
+<div class="lbl">Your name</div><input id="mpName" maxlength="16" placeholder="Your name" autocomplete="nickname">
+<div id="mpStart"><button id="mpHost" style="width:100%;text-align:center">Start a game</button><div class="note">You'll get a link to send to your friends. Keep the game open while they play — your phone is the host.</div>
+<div class="lbl">Or join a friend</div><input id="mpCode" maxlength="6" placeholder="Game code, e.g. K7QXM" autocapitalize="characters" autocomplete="off"><button id="mpJoin" style="width:100%;text-align:center">Join game</button></div>
+<div id="mpLive" style="display:none"><div class="note" id="mpWho"></div><div class="code" id="mpCodeShow"></div><div class="row"><button id="mpShare" style="text-align:center">Send invite</button><button id="mpCopy" style="text-align:center">Copy link</button></div>
+<button id="mpChat" style="width:100%;text-align:center;margin-top:8px">Say something</button><button id="mpLeave" style="width:100%;text-align:center;margin-top:8px">Leave game</button></div>
+<div class="note" id="mpStat"></div><button id="mpX" style="width:100%;text-align:center;margin-top:6px">Close</button></div></div>
+<div id="mpChip"></div><div id="mpToast"></div>
 <div id="travel" class="ovl" role="dialog" aria-label="Go to a place"><div class="pbox"><h2>Go to…</h2><div id="travelList"></div><button id="travelX" style="text-align:center;margin-top:12px">Cancel</button></div></div>
 <div id="tube" class="ovl" role="dialog" aria-label="Choose a station"><div class="pbox"><h2>Mind the gap</h2><div class="lbl">From <span id="tubeFrom"></span> — where to?</div><div id="tubeList"></div><button id="tubeX" style="text-align:center">Stay on the platform</button></div></div>
 <div id="ride" class="ovl"><div class="rbox"><div class="rl" id="rideLine"></div><div class="rn">The next station is</div><div class="rs" id="rideNext"></div><div class="rt"></div></div></div>
@@ -180,6 +192,7 @@ body.touch #bMenu{top:calc(212px + env(safe-area-inset-top));padding:6px 14px}
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/meshopt_decoder.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/SSAOPass.js"></script>
 <script src="a_pdtex.js"></script>
 <script src="a_pdgrass.js"></script>
@@ -4686,7 +4699,7 @@ function makeCarMesh(type,hex,metal){const v=VSPEC[type],G=vgeo(type),g=new THRE
 const cars=[];let carId=0;
 class Car{constructor(type,x,z,h,hex){this.id=carId++;this.type=type;this.s=SPECS[type];
  const col=hex!=null?hex:(type==='cab'?0x0b0b0c:type==='bus'?0xc8102e:type==='police'?0xf4f4f2:pick(PAL[type]||CARCOL));const metal=type==='cab'||type==='bus'||type==='police'||type==='van'?false:Math.random()<.65;
- const m=makeCarMesh(type,col,metal);Object.assign(this,m);this.revM=m.rev;delete this.rev;
+ const m=makeCarMesh(type,col,metal);Object.assign(this,m);this.hex=col;this.revM=m.rev;delete this.rev;
  this.pos=new V3(x,0,z);this.h=h;this.vx=0;this.vz=0;this.vf=0;this.steer=0;this.inp={thr:0,steer:0,hb:false};this.driver=null;this.ai=null;this.police=type==='police';this.chase=false;this.stuck=0;this.rev=0;this.blockT=0;this.cruise=type==='bus'?8:rr(10,13.5);
  this.pitch=0;this.roll=0;this.pv=0;this.rv=0;this.pvf=0;this.ph=h;this.indic=0;this.detOn=true;
  const n=Math.max(2,Math.ceil(this.s.L/(this.s.W*1.05)));this.circ=[];for(let i=0;i<n;i++)this.circ.push(-(this.s.L/2-this.s.W/2)+i*(this.s.L-this.s.W)/(n-1));this.cr=this.s.W/2+.05;this.mass=type==='bus'?5:type==='van'||type==='suv'||type==='offroad'?1.4:1;cars.push(this);this.sync();try{vehAssign(this);}catch(e){}if(RRT&&type==='suv'&&(this.vm||'rr')==='rr')try{rrUpgrade(this);}catch(e){console.error(e);}}
@@ -5015,7 +5028,7 @@ function vehUpgrade(c,key,T){if(c.vk)return;c.vk=key;const cfg=VEHM[key]||{},M=v
  c.tail={set material(m){for(const t of tails)t.material=m;const hi=todName==='day'?0:todName==='dusk'?1.6:2.6;if(RRHEAD.length&&RRHEAD[0].emissiveIntensity!==hi)for(const h of RRHEAD)h.emissiveIntensity=hi;}};
  c.indL=null;c.indR=null;c.revM=null;c.det=[];
  try{carShade(c.g);}catch(e){console.warn('shade',e);}}
-function vehAssign(c){const L=VEHFOR[c.type];if(!L||c.vm)return;c.vm=L[Math.random()*L.length|0];if(c.vm==='rr')return;const key=c.vm;vehLoad(key,T=>{try{vehUpgrade(c,key,T);}catch(e){console.error(e);}});}
+var FORCE_VM=null;function vehAssign(c){const L=VEHFOR[c.type];if(!L||c.vm)return;c.vm=(FORCE_VM&&L.includes(FORCE_VM))?FORCE_VM:L[Math.random()*L.length|0];if(c.vm==='rr')return;const key=c.vm;vehLoad(key,T=>{try{vehUpgrade(c,key,T);}catch(e){console.error(e);}});}
 rrLoad();
 function focusPos(){return player.car?player.car.pos:player.pos;}
 let starterCab,heistCar=null;
@@ -5283,6 +5296,82 @@ function streetAt(x,z){let best=null,bd=20;EDGES.forEach((e,ei)=>{const n=STREET
 function streetHTML(n){const w=n.split(' ');let pc='';if(/^[A-Z]{1,2}\d/.test(w[w.length-1]))pc=w.pop();
  const t=w.map((x,i)=>i&&/^(OF|THE|AND)$/.test(x)?x.toLowerCase():x.split(/([-'’])/).map(y=>y.length>1?y[0]+y.slice(1).toLowerCase():y).join('')).join(' ');
  return t.toUpperCase()+(pc?'<b>'+pc+'</b>':'');}
+
+/* ---------- multiplayer: phones connect directly (WebRTC via PeerJS); the host relays ---------- */
+const NETPFX='wstreets-v1-',NET_TOPS=[0x2f3b2c,0x8a1c1c,0x1f3f8a,0x7a5a1d,0x3d3d40,0x5a2a6b,0x1d6b5a,0xc7b48a,0xd35400,0x0e6e8c];
+const NET={peer:null,host:false,code:'',on:false,id:'',name:'',col:0,conns:new Map(),hc:null,st:new Map(),av:new Map(),sendT:0,lastTod:null};
+function netCfg(){const o={debug:0,config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun.cloudflare.com:3478'},{urls:'turn:eu-0.turn.peerjs.com:3478',username:'peerjs',credential:'peerjsp'},{urls:'turn:us-0.turn.peerjs.com:3478',username:'peerjs',credential:'peerjsp'}]}};try{const x=localStorage.getItem('wsPeerSrv');if(x)Object.assign(o,JSON.parse(x));}catch(e){}return o;}
+function netGenCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let c='';for(let i=0;i<5;i++)c+=A[Math.random()*A.length|0];return c;}
+function netLink(){return location.origin+location.pathname+'?join='+NET.code;}
+let netToastT=0;function netMsg(m){const e=$('mpToast');if(!e)return;e.textContent=m;e.style.opacity=1;clearTimeout(netToastT);netToastT=setTimeout(()=>e.style.opacity=0,3500);const st=$('mpStat');if(st)st.textContent='';}
+function netStat(m){const st=$('mpStat');if(st)st.textContent=m||'';}
+function netUI(){const live=NET.on||NET.peer;$('mpStart').style.display=live?'none':'block';$('mpLive').style.display=live?'block':'none';
+ if(live){$('mpCodeShow').textContent=NET.code;$('mpWho').textContent=NET.host?'Your game is live. Send this code or the invite link to your friends:':'You are in game:';$('mpShare').style.display=$('mpCopy').style.display=NET.host||NET.on?'':'none';}
+ const n=NET.st.size+(NET.on?1:0),chip=$('mpChip');if(NET.on){chip.style.display='block';chip.textContent='👥 '+n+' online · '+NET.code;}else chip.style.display='none';}
+function netName(){let n=($('mpName').value||'').trim();if(!n){try{n=localStorage.getItem('wsName')||'';}catch(e){}}if(!n)n='Player '+(10+Math.random()*89|0);n=n.slice(0,16);$('mpName').value=n;try{localStorage.setItem('wsName',n);}catch(e){}NET.name=n;let h=0;for(const ch of n)h=(h*31+ch.charCodeAt(0))>>>0;NET.col=h%NET_TOPS.length;return n;}
+function openMP(){if(state==='pause'){$('pause').classList.remove('on');}else if(state==='play'){preState='play';}else return;state='pause';try{$('mpName').value=localStorage.getItem('wsName')||'';}catch(e){}netUI();$('mp').classList.add('on');}
+function closeMP(){$('mp').classList.remove('on');state='play';}
+function netReady(){if(window.Peer)return true;netStat('Multiplayer needs an internet connection — please check yours and try again.');return false;}
+function netStop(quiet){try{if(NET.peer)NET.peer.destroy();}catch(e){}NET.peer=null;NET.on=false;NET.hc=null;NET.conns.clear();for(const id of [...NET.av.keys()])netDrop(id);NET.st.clear();if(!quiet)netUI();}
+function netHost(tries){if(!netReady())return;netStop(true);netName();NET.host=true;NET.code=netGenCode();netStat('Starting your game…');
+ const p=new Peer(NETPFX+NET.code,netCfg());NET.peer=p;
+ p.on('open',id=>{NET.id=id;NET.on=true;netStat('');netUI();netMsg('Game started — code '+NET.code);});
+ p.on('connection',c=>{c.on('open',()=>{NET.conns.set(c.peer,c);});c.on('data',d=>netRecv(d,c));const bye=()=>{if(!NET.conns.has(c.peer))return;NET.conns.delete(c.peer);const s=NET.st.get(c.peer);if(s)netMsg((s.n||'A friend')+' left');netDrop(c.peer);NET.st.delete(c.peer);netBroadcast({t:'bye',id:c.peer});netUI();};c.on('close',bye);c.on('error',bye);});
+ p.on('error',e=>{if(e.type==='unavailable-id'&&(tries||0)<4){netHost((tries||0)+1);return;}netStat('Connection problem ('+e.type+'). Try again.');});
+ p.on('disconnected',()=>{try{if(NET.peer===p&&!p.destroyed)p.reconnect();}catch(e){}});netUI();}
+function netJoin(code){if(!netReady())return;code=(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');if(code.length<4){netStat('Enter the 5-character game code.');return;}
+ netStop(true);netName();NET.host=false;NET.code=code;netStat('Joining '+code+'…');
+ const p=new Peer(undefined,netCfg());NET.peer=p;let ok=false;
+ const fail=m=>{if(ok)return;netStop();netStat(m);};
+ const to=setTimeout(()=>fail("Couldn't reach game "+code+". Check the code, and make sure your friend still has the game open."),20000);
+ p.on('open',id=>{NET.id=id;const c=p.connect(NETPFX+code,{serialization:'json',reliable:true});NET.hc=c;
+  c.on('open',()=>{ok=true;clearTimeout(to);NET.on=true;netStat('');netUI();netMsg('You joined '+code+'!');if($('mp').classList.contains('on'))closeMP();});
+  c.on('data',d=>netRecv(d,c));c.on('close',()=>{if(NET.on){netMsg('The host ended the game');netStop();}});c.on('error',()=>{});});
+ p.on('error',e=>{clearTimeout(to);fail(e.type==='peer-unavailable'?'No game found with code '+code+'.':'Connection problem ('+e.type+'). Try again.');});netUI();}
+function netBroadcast(m,except){for(const [id,c] of NET.conns)if(id!==except&&c.open)try{c.send(m);}catch(e){}}
+function netMine(){const c=player.car;const s={id:NET.id,n:NET.name,o:NET.col,x:+player.pos.x.toFixed(2),y:+player.pos.y.toFixed(2),z:+player.pos.z.toFixed(2),h:+player.h.toFixed(3),sp:+(player.spd||0).toFixed(2)};
+ if(c)s.c={t:c.type,vm:c.vm||'',hx:c.hex,x:+c.pos.x.toFixed(2),z:+c.pos.z.toFixed(2),h:+c.h.toFixed(3),vx:+c.vx.toFixed(2),vz:+c.vz.toFixed(2),st:+(c.steer||0).toFixed(2)};return s;}
+function netRecv(d,c){if(!d||typeof d!=='object')return;
+ if(NET.host){if(d.t==='s'&&d.p){d.p.id=c.peer;const isNew=!NET.st.has(c.peer);NET.st.set(c.peer,Object.assign(d.p,{_t:performance.now()}));if(isNew){netMsg((d.p.n||'A friend')+' joined');netUI();}}
+  else if(d.t==='chat'){const m={t:'chat',n:(NET.st.get(c.peer)||{}).n||'Friend',m:String(d.m||'').slice(0,120)};netChatShow(m,c.peer);netBroadcast(m);} return;}
+ if(d.t==='S'){const seen=new Set();for(const s of d.p){if(s.id===NET.id)continue;seen.add(s.id);const isNew=!NET.st.has(s.id);s._t=performance.now();NET.st.set(s.id,s);if(isNew&&NET.st.size>0&&s.id!==NETPFX+NET.code)netMsg((s.n||'A friend')+' is here');}
+  for(const id of [...NET.st.keys()])if(!seen.has(id)){netDrop(id);NET.st.delete(id);}
+  if(d.tod&&d.tod!==todName&&d.tod!==NET.lastTod){NET.lastTod=d.tod;try{setTOD(d.tod);}catch(e){}}netUI();}
+ else if(d.t==='bye'){const s=NET.st.get(d.id);if(s)netMsg((s.n||'A friend')+' left');netDrop(d.id);NET.st.delete(d.id);netUI();}
+ else if(d.t==='chat')netChatShow(d,null);}
+function netChat(){const m=prompt('Say something to everyone:');if(!m)return;const msg={t:'chat',n:NET.name,m:m.slice(0,120)};if(NET.host){netChatShow(msg,NET.id);netBroadcast(msg);}else if(NET.hc&&NET.hc.open){NET.hc.send({t:'chat',m:msg.m});netChatShow(msg,NET.id);}closeMP();}
+function netChatShow(m,fromId){netMsg(m.n+': '+m.m);let id=fromId;if(!id){for(const [k,s] of NET.st)if(s.n===m.n)id=k;}const a=id&&NET.av.get(id);if(a){a.say=m.m;a.sayT=5;netTag(a,a.name,m.m);}}
+function netTag(a,name,say){const W=512,H=say?150:72,cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');x.font='700 40px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
+ if(say){x.fillStyle='rgba(255,255,255,.95)';const tw=Math.min(W-20,x.measureText(say).width+40);x.beginPath();x.roundRect?x.roundRect((W-tw)/2,2,tw,64,18):x.rect((W-tw)/2,2,tw,64);x.fill();x.fillStyle='#111';x.fillText(say.length>26?say.slice(0,25)+'…':say,W/2,35);}
+ const y=say?112:36;x.lineWidth=8;x.strokeStyle='rgba(0,0,0,.75)';x.strokeText(name,W/2,y);x.fillStyle='#ffd27a';x.fillText(name,W/2,y);
+ const t=new THREE.CanvasTexture(cv);t.encoding=THREE.sRGBEncoding;if(a.tag.material.map)a.tag.material.map.dispose();a.tag.material.map=t;a.tag.material.needsUpdate=true;a.tag.scale.set(2.4,2.4*H/W,1);a.tag.center.set(.5,0);}
+function netAvatar(id,s){const d=Object.assign({},PLAYERD,{top:Object.assign({},PLAYERD.top,{col:NET_TOPS[(s.o|0)%NET_TOPS.length]}),hair:Object.assign({},PLAYERD.hair),skin:SKINS[(s.o|0)%SKINS.length]});
+ const m=makePerson(d);m.g.position.set(s.x,s.y,s.z);const tag=new THREE.Sprite(new THREE.SpriteMaterial({depthTest:false,depthWrite:false,transparent:true}));tag.renderOrder=999;scene.add(tag);
+ const a={m,tag,name:s.n||'Friend',ph:0,car:null,say:'',sayT:0,h:s.h||0};netTag(a,a.name,'');NET.av.set(id,a);return a;}
+function netDrop(id){const a=NET.av.get(id);if(!a)return;scene.remove(a.m.g);scene.remove(a.tag);if(a.car){a.car.driver=null;a.car.inp={thr:0,steer:0,hb:true};a.car.netLeft=1;}NET.av.delete(id);}
+function netCarFor(a,c){if(a.car&&a.car.type===c.t&&(a.car.vm||'')===(c.vm||''))return a.car;if(a.car){a.car.driver=null;a.car.inp={thr:0,steer:0,hb:true};a.car.netLeft=1;a.car=null;}
+ for(const k of cars)if(k.netLeft&&k.driver===null&&k.type===c.t&&Math.hypot(k.pos.x-c.x,k.pos.z-c.z)<4){k.driver='net';k.netLeft=0;a.car=k;return k;}
+ FORCE_VM=c.vm||null;let k;try{k=new Car(c.t,c.x,c.z,c.h,c.hx);}finally{FORCE_VM=null;}k.driver='net';k.inp={thr:0,steer:0,hb:false};a.car=k;return k;}
+function netTick(dt){if(!NET.on)return;NET.sendT-=dt;
+ if(NET.sendT<=0){NET.sendT=.1;const me=netMine();
+  if(NET.host){const p=[me];const now=performance.now();for(const [id,s] of NET.st){if(now-s._t<8000)p.push(Object.assign({},s,{_t:undefined}));}netBroadcast({t:'S',p,tod:todName});}
+  else if(NET.hc&&NET.hc.open)try{NET.hc.send({t:'s',p:me});}catch(e){}}
+ const k=1-Math.exp(-dt*10);
+ for(const [id,s] of NET.st){let a=NET.av.get(id);if(!a)a=netAvatar(id,s);if(s.n&&s.n!==a.name){a.name=s.n;netTag(a,a.name,a.sayT>0?a.say:'');}
+  if(a.sayT>0){a.sayT-=dt;if(a.sayT<=0){a.say='';netTag(a,a.name,'');}}
+  if(s.c){const c=netCarFor(a,s.c);c.pos.x+=(s.c.x-c.pos.x)*k;c.pos.z+=(s.c.z-c.pos.z)*k;if(Math.hypot(s.c.x-c.pos.x,s.c.z-c.pos.z)>25){c.pos.x=s.c.x;c.pos.z=s.c.z;}
+   let dh=s.c.h-c.h;dh=Math.atan2(Math.sin(dh),Math.cos(dh));c.h+=dh*k;c.vx=s.c.vx;c.vz=s.c.vz;c.steer=s.c.st||0;try{c.sync();}catch(e){}
+   a.m.g.visible=false;a.tag.position.set(c.pos.x,(c.pos.y||0)+2.1,c.pos.z);}
+  else{if(a.car){a.car.driver=null;a.car.inp={thr:0,steer:0,hb:true};a.car.vx=a.car.vz=0;a.car.netLeft=1;a.car=null;}
+   const g=a.m.g;g.visible=true;if(g.position.distanceTo(new THREE.Vector3(s.x,s.y,s.z))>20)g.position.set(s.x,s.y,s.z);else{g.position.x+=(s.x-g.position.x)*k;g.position.y+=(s.y-g.position.y)*k;g.position.z+=(s.z-g.position.z)*k;}
+   let dh=s.h-a.h;dh=Math.atan2(Math.sin(dh),Math.cos(dh));a.h+=dh*k;g.rotation.y=a.h;const sp=s.sp||0;a.ph+=dt*(sp>5?10:7.8)*(sp>.15?1:0);try{animPed(a.m,a.ph,sp>.15?(sp>5?.95:.62):0,clockT);}catch(e){}
+   a.tag.position.set(g.position.x,g.position.y+1.95,g.position.z);}}}
+function netInit(){$('pMP').addEventListener('click',openMP);$('mpX').addEventListener('click',closeMP);$('mpHost').addEventListener('click',()=>netHost(0));$('mpJoin').addEventListener('click',()=>netJoin($('mpCode').value));
+ $('mpLeave').addEventListener('click',()=>{netStop();netMsg('You left the game');});$('mpChat').addEventListener('click',netChat);$('mpChip').addEventListener('click',openMP);
+ $('mpCopy').addEventListener('click',()=>{const l=netLink();try{navigator.clipboard.writeText(l).then(()=>netStat('Link copied: '+l),()=>netStat(l));}catch(e){netStat(l);}});
+ $('mpShare').addEventListener('click',()=>{const l=netLink(),t='Come and play Westminster Streets with me! Game code '+NET.code;if(navigator.share)navigator.share({title:'Westminster Streets',text:t,url:l}).catch(()=>{});else{try{navigator.clipboard.writeText(l);}catch(e){}netStat('Invite link copied: '+l);}});
+ window.addEventListener('pagehide',()=>{try{if(NET.peer)NET.peer.destroy();}catch(e){}});}
+function netAutoJoin(){try{const j=new URLSearchParams(location.search).get('join');if(j&&!NET.peer){setTimeout(()=>{netName();netJoin(j);},800);}}catch(e){}}
 function updateStreet(dt){streetT-=dt;if(streetT>0)return;streetT=.35;const P=focusPos();let h='';
  if(player.inside)h=player.inside.name.toUpperCase();else if(player.ug)h=(zoneName(P.x,P.z)||'').toUpperCase();else{const n=streetAt(P.x,P.z);h=n?streetHTML(n):(zoneName(P.x,P.z)||'').toUpperCase();}
  if(h!==streetCur){streetCur=h;$('street').innerHTML=h;}}
@@ -5299,7 +5388,7 @@ let moneyShown=-1,lastHM='';
 function hud(dt){const [h,m]=londonHM();const hm=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');if(hm!==lastHM){lastHM=hm;$('clock').textContent=hm;drawClock();}
  if(moneyShown!==player.money){moneyShown=player.money;$('money').textContent='£'+player.money.toLocaleString('en-GB');}
  $('hp').firstChild.style.width=Math.max(0,player.hp)+'%';
- const z=zoneName(focusPos().x,focusPos().z);if(z!==zoneCur){zoneCur=z;$('zone').textContent=z;$('zone').style.opacity=1;zoneT=3.5;}if(zoneT>0){zoneT-=dt;if(zoneT<=0)$('zone').style.opacity=0;}try{updateStreet(dt);}catch(e){}
+ const z=zoneName(focusPos().x,focusPos().z);if(z!==zoneCur){zoneCur=z;$('zone').textContent=z;$('zone').style.opacity=1;zoneT=3.5;}if(zoneT>0){zoneT-=dt;if(zoneT<=0)$('zone').style.opacity=0;}try{updateStreet(dt);}catch(e){}try{netTick(dt);}catch(e){console.warn('net',e);}
  if(player.car){$('veh').textContent=player.car.s.name;$('speedo').innerHTML=Math.round(player.car.speed()*2.237)+'<small>mph</small>';}else{$('veh').textContent='';$('speedo').innerHTML='';}
  if(bigT>0){bigT-=dt;if(bigT<=0)$('big').style.opacity=0;}
  let pr='';if(!player.car&&state==='play'){const c=player.ug?null:nearCar();if(player.ug&&canBoard())pr=(TOUCH?'Tap GET IN':'Press E')+' to board the train';else if(player.ug&&kitNear()&&TRAIN.st!=='dwell'&&!c)pr='Mind the gap — the next train is approaching';if(!pr){const rs=railNear();if(rs)pr=railPrompt(rs);}if(pr);else if(c)pr=(TOUCH?'Tap GET IN':'Press E')+' to '+(c.driver==='ai'?'pull the driver out of':'get in')+' the '+c.s.name.toLowerCase();else{let best=null,bd=1e9;for(const l of LANDMARKS){if(!!l.ug!==!!player.ug)continue;const d=Math.hypot(l.x-player.pos.x,l.z-player.pos.z);if(d<l.r+2&&d<bd){bd=d;best=l;}}if(best)pr=best.text;}}
@@ -5337,7 +5426,7 @@ function updateMission(dt){const st=mis.step;if(!st||mis.phase==='wait')return;c
 
 /* ---------- game flow ---------- */
 let state='title',clockT=0,deadT=0;
-function nearCar(){let best=null,bd=1e9;for(const c of cars){if(c.driver==='player')continue;const fx=Math.sin(c.h),fz=Math.cos(c.h);let d=1e9;for(const o of c.circ)d=Math.min(d,Math.hypot(c.pos.x+fx*o-player.pos.x,c.pos.z+fz*o-player.pos.z)-c.cr);if(d<3.2&&d<bd&&c.speed()<6){bd=d;best=c;}}return best;}
+function nearCar(){let best=null,bd=1e9;for(const c of cars){if(c.driver==='player'||c.driver==='net')continue;const fx=Math.sin(c.h),fz=Math.cos(c.h);let d=1e9;for(const o of c.circ)d=Math.min(d,Math.hypot(c.pos.x+fx*o-player.pos.x,c.pos.z+fz*o-player.pos.z)-c.cr);if(d<3.2&&d<bd&&c.speed()<6){bd=d;best=c;}}return best;}
 function enterExit(){if(player.inside){intAct();return;}{const rs=railNear();if(rs){openRail(rs);return;}}{const dn=doorNear();if(dn){enterInt(dn.I);return;}}if(player.ug){if(canBoard())openTube();return;}if(player.down>0)return;
  if(player.car){const c=player.car;if(c.speed()>7){flash('Too fast','Slow down to get out','#ff6b5a');return;}const fx=Math.sin(c.h),fz=Math.cos(c.h);for(const s of [1,-1]){const x=c.pos.x+(-fz)*s*(c.s.W/2+.9),z=c.pos.z+fx*s*(c.s.W/2+.9);if(!collideCircleTest(x,z,.35)){player.pos.set(x,groundS(x,z),z);break;}}
   player.h=c.h;c.driver=null;c.inp={thr:0,steer:0,hb:true};player.car=null;player.m.g.visible=true;cam.dragT=0;return;}
@@ -5620,6 +5709,7 @@ function showErr(msg){try{let d=document.getElementById('errbox');if(!d){d=docum
 addEventListener('error',e=>showErr('Error: '+(e.message||e)+(e.lineno?' @'+e.lineno:'')));addEventListener('unhandledrejection',e=>showErr('Error: '+(e.reason&&e.reason.message||e.reason)));
 try{renderer.domElement.addEventListener('webglcontextlost',()=>showErr('The graphics memory ran out on this device (WebGL context lost).'));}catch(e){}
 $('play').addEventListener('click',()=>{if(SHARP)setTimeout(()=>{try{localStorage.setItem('wsBoot','0');}catch(e){}},20000);if(SHARP_AUTO_OFF)setTimeout(()=>{try{flash('Sharp graphics off','Your phone struggled — switched back to standard. Turn it on again in MENU.','#fff');}catch(e){}},4500);try{AU.init();AU.c&&AU.c.resume();}catch(e){}$('start').style.display='none';document.body.classList.add('playing');state='play';cam.yaw=player.h+PI;sizeMini();zoneCur='';flash('Westminster','Monday morning, SW1','#fff');try{startStep();}catch(e){showErr('Start failed: '+e.message);}});
+try{netInit();}catch(e){console.warn('netInit',e);}$('play').addEventListener('click',()=>{setTimeout(netAutoJoin,1500);});try{if(new URLSearchParams(location.search).get('join'))$('loading').textContent='Press PLAY to join your friend’s game';}catch(e){}
 requestAnimationFrame(()=>setTimeout(()=>{try{init();}catch(e){console.error(e);$('loading').textContent='Something went wrong building the city: '+e.message;}},30));
 }
 </script>
