@@ -5036,7 +5036,7 @@ function vehCat(m){const n=(m&&m.name)||'';return n.indexOf('cat:')===0?n.slice(
 // Detailed BMW police model: loaded once, with procedural fallback on failure or at distance.
 let POLBMW=null,POLBMWloading=false;
 function policeBMWLoad(){if(POLBMWloading||POLBMW||!THREE.GLTFLoader)return;POLBMWloading=true;
- const L=mkGLTF();L.load('police_bmw.glb?v=3',g=>{const body=g.scene.children.find(n=>n.name==='body'),W={};
+ const L=mkGLTF();L.load('police_bmw.glb?v=4',g=>{const body=g.scene.children.find(n=>n.name==='body'),W={};
  for(const n of g.scene.children){const name=n.name.replace(/_/g,' ');if(/^W /.test(name))W[name.slice(2)]=n;}
  if(!body||!['FL','FR','RL','RR'].every(key=>W[key])){console.warn('Police BMW asset missing body or wheels');return;}
  const reflective={'White':.65,'Color_007':.9,'Translucent_Glass_Gray_3':.85,'0131_Silver':.8};
