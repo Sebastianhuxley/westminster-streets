@@ -177,6 +177,7 @@ body.touch #bMenu{top:calc(212px + env(safe-area-inset-top));padding:6px 14px}
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/SSAOPass.js"></script>
 <script src="a_pdtex.js"></script>
 <script src="a_pdgrass.js"></script>
@@ -4662,7 +4663,7 @@ class Car{constructor(type,x,z,h,hex){this.id=carId++;this.type=type;this.s=SPEC
  const m=makeCarMesh(type,col,metal);Object.assign(this,m);this.revM=m.rev;delete this.rev;
  this.pos=new V3(x,0,z);this.h=h;this.vx=0;this.vz=0;this.vf=0;this.steer=0;this.inp={thr:0,steer:0,hb:false};this.driver=null;this.ai=null;this.police=type==='police';this.chase=false;this.stuck=0;this.rev=0;this.blockT=0;this.cruise=type==='bus'?8:rr(10,13.5);
  this.pitch=0;this.roll=0;this.pv=0;this.rv=0;this.pvf=0;this.ph=h;this.indic=0;this.detOn=true;
- const n=Math.max(2,Math.ceil(this.s.L/(this.s.W*1.05)));this.circ=[];for(let i=0;i<n;i++)this.circ.push(-(this.s.L/2-this.s.W/2)+i*(this.s.L-this.s.W)/(n-1));this.cr=this.s.W/2+.05;this.mass=type==='bus'?5:type==='van'||type==='suv'||type==='offroad'?1.4:1;cars.push(this);this.sync();}
+ const n=Math.max(2,Math.ceil(this.s.L/(this.s.W*1.05)));this.circ=[];for(let i=0;i<n;i++)this.circ.push(-(this.s.L/2-this.s.W/2)+i*(this.s.L-this.s.W)/(n-1));this.cr=this.s.W/2+.05;this.mass=type==='bus'?5:type==='van'||type==='suv'||type==='offroad'?1.4:1;cars.push(this);this.sync();if(RRT&&type==='suv')try{rrUpgrade(this);}catch(e){console.error(e);}}
  sync(){const t=groundS(this.pos.x,this.pos.z);this.gy=this.gy==null?t:this.gy+(t-this.gy)*.35;this.g.position.set(this.pos.x,this.gy,this.pos.z);this.g.rotation.y=this.h;}
  physics(dt){const s=this.s,inp=this.inp;const fx=Math.sin(this.h),fz=Math.cos(this.h),rx=-fz,rz=fx;let vf=this.vx*fx+this.vz*fz,vr=this.vx*rx+this.vz*rz;const t=inp.thr;
   if(t>.02){if(vf<-.4)vf=Math.min(0,vf+s.brake*t*dt);else vf+=s.acc*t*dt*Math.max(0,1-vf/s.max);}
@@ -4881,6 +4882,38 @@ function placeTraffic(c,minD,maxD){const P=focusPos();for(let k=0;k<40;k++){cons
   c.pos.set(p.x,0,p.z);c.h=p.h;c.vx=Math.sin(p.h)*6;c.vz=Math.cos(p.h)*6;c.ai={a:p.a,b:p.b,e:ei};c.stuck=0;c.rev=0;c.sync();return true;}return false;}
 function placePed(p,minD,maxD){const P=focusPos();for(let k=0;k<40;k++){const ei=Math.floor(Math.random()*EDGES.length),dir=Math.random()<.5?1:-1;const e=EDGES[ei];const q=edgePoint(ei,rr(.1,.9),dir,0);const side=Math.random()<.5?1:-1;const A=NODES[q.a],B=NODES[q.b];let dx=B[0]-A[0],dz=B[1]-A[1];const l=Math.hypot(dx,dz);dx/=l;dz/=l;const x=q.x+dz*side*(e.w/2+2.5),z=q.z-dx*side*(e.w/2+2.5);const d=Math.hypot(x-P.x,z-P.z);if(d<minD||d>maxD)continue;if(Math.random()>footfall(x,z)&&k<26)continue;if(collideCircleTest(x,z,.4))continue;
   p.pos.set(x,0,z);p.e=ei;p.a=q.a;p.b=q.b;p.side=side;p.state='walk';p.h=q.h;p.m.g.rotation.set(0,p.h,0);return true;}return false;}
+
+/* ---- photo-real vehicle models (GLB) ---- */
+const RRA={xc:.041,yc:.016,zc:-.333};var RRT=null;
+function rrLoad(){if(!THREE.GLTFLoader)return;const L=new THREE.GLTFLoader(),got={};
+ const done=()=>{if(!got.hi||!got.lo)return;RRT=got;for(const c of cars)if(c.type==='suv')try{rrUpgrade(c);}catch(e){console.error(e);}};
+ for(const k of ['hi','lo'])L.load('rr_'+k+'.glb',g=>{const T={body:null,wheel:null,brake:null,wheels:{}};g.scene.updateMatrixWorld(true);
+  g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const m=o.material;if(m&&m.isMeshStandardMaterial){m.envMapIntensity=1;if(/glass/i.test(m.name)&&m.transparent){m.depthWrite=false;}}}});
+  for(const n of g.scene.children){const nn=n.name.replace(/_/g,' ');if(nn==='Body')T.body=n;else if(nn==='FL Wheel')T.wheel=n;else if(nn==='FL Brake')T.brake=n;}if(!T.body||!T.wheel){console.warn('rr nodes',g.scene.children.map(n=>n.name));return;}
+  got[k]=T;done();},undefined,e=>console.warn('rr load',e));}
+function rrP(x,y,z){return new THREE.Vector3(-(z-RRA.zc),y-RRA.yc,x-RRA.xc);}
+function rrHolder(n,paint){const h=new THREE.Group();h.rotation.y=-PI/2;const o=n.clone();h.add(o);
+ const meshes=[];o.traverse(k=>{if(k.isMesh){meshes.push(k);if(paint&&/paint/i.test(k.material.name))k.material=paint;}});return {h,o,meshes};}
+function rrUpgrade(c){if(c.rr||!RRT)return;c.rr=1;const inner=c.body.children[0];
+ let paint=null;for(const k of inner.children)if(k.isMesh&&k.visible!==false){paint=k.material;break;}
+ for(const k of inner.children)if(k!==c.drv)k.visible=false;
+ const lod=new THREE.LOD(),tails=[],heads=[];
+ for(const [k,d] of [['hi',0],['lo',LOWQ?22:40]]){const T=RRT[k],B=rrHolder(T.body,paint);const grp=new THREE.Group();grp.add(B.h);
+  B.h.position.set(RRA.zc,-RRA.yc,-RRA.xc);
+  for(const m of B.meshes){const nm=m.material.name||'';if(/tail light/i.test(nm))tails.push(m);else if(/head light/i.test(nm))heads.push(m);}lod.addLevel(grp,d);}
+ inner.add(lod);c.rrLod=lod;
+ for(const w of c.wheels)c.g.remove(w.hub);
+ const W=[];const fx=1.6073,rx=-1.3301,wy=.4277,zl=-1.1714,zr=.5057;
+ for(const [x,z,front] of [[fx,zl,1],[rx,zl,0],[fx,zr,1],[rx,zr,0]]){const hub=new THREE.Group();hub.rotation.order='YXZ';hub.position.copy(rrP(x,wy,z));c.g.add(hub);
+  const spin=new THREE.Group();hub.add(spin);const right=z>RRA.zc;const wl=new THREE.LOD();
+  for(const [k,d] of [['hi',0],['lo',LOWQ?16:30]]){const T=RRT[k];const h=new THREE.Group();h.rotation.y=-PI/2;const o=T.wheel.clone();o.position.set(0,0,0);if(right){o.rotation.y+=PI;}h.add(o);wl.addLevel(h,d);}
+  spin.add(wl);
+  if(front&&RRT.hi.brake){const h=new THREE.Group();h.rotation.y=-PI/2;const o=RRT.hi.brake.clone();o.position.set(0,0,0);if(right)o.rotation.y+=PI;h.add(o);hub.add(h);}
+  W.push({hub,spin,rim:new THREE.Object3D(),front:!!front});}
+ c.wheels=W;
+ c.tail={set material(m){for(const t of tails)t.material=m;}};c.indL=null;c.indR=null;c.revM=null;c.det=heads;
+ }
+rrLoad();
 function focusPos(){return player.car?player.car.pos:player.pos;}
 let starterCab,heistCar=null;
 function spawnAgents(){
