@@ -5038,13 +5038,13 @@ let POLBMW=null,POLBMWloading=false;
 function policeBMWLoad(){if(POLBMWloading||POLBMW||!THREE.GLTFLoader)return;POLBMWloading=true;
  const L=mkGLTF();L.load('police_bmw.glb',g=>{const body=g.scene.children.find(n=>n.name==='body'),W={};
  for(const n of g.scene.children){const name=n.name.replace(/_/g,' ');if(/^W /.test(name))W[name.slice(2)]=n;}
- if(!body||Object.keys(W).length!==4){console.warn('Police BMW asset missing body or wheels');return;}
- POLBMW={body,W};},undefined,e=>console.warn('Detailed police BMW unavailable; retaining default police cars',e));}
+ if(!body||!['FL','FR','RL','RR'].every(key=>W[key])){console.warn('Police BMW asset missing body or wheels');return;}
+ freeOnUpload(g.scene);POLBMW={body,W};},undefined,e=>console.warn('Detailed police BMW unavailable; retaining default police cars',e));}
 function policeBMWAttach(c){if(c._polBMW||!POLBMW)return;const group=new THREE.Group();group.position.y=-.7;c.body.add(group);const body=POLBMW.body.clone();group.add(body);
  const orig=c.body.children[0],wheels=[];for(const key of ['FL','FR','RL','RR']){const src=POLBMW.W[key],hub=new THREE.Group(),spin=new THREE.Group(),wheel=src.clone();hub.position.copy(src.position);wheel.position.set(0,0,0);spin.add(wheel);hub.add(spin);c.g.add(hub);
  const match=c.wheels.find(w=>w.front===(key[0]==='F')&&Math.sign(w.hub.position.x)===Math.sign(hub.position.x));wheels.push({hub,spin,match});hub.visible=false;}
- const lights=[];for(const sx of [-1,1])for(const z of [-.36,-.72]){const l=new THREE.Mesh(GEO.box,blueOff);l.scale.set(.35,.065,.025);l.position.set(sx*.28,1.58,z);group.add(l);lights.push({l,side:sx});}
- for(const sx of [-1,1]){const l=new THREE.Mesh(GEO.box,blueOff);l.scale.set(.12,.035,.025);l.position.set(sx*.28,.65,2.36);group.add(l);lights.push({l,side:sx});}
+ const lights=[];for(const sx of [-1,1])for(const z of [-.36,-.72]){const l=new THREE.Mesh(GEO.box,blueOff);l.scale.set(.35,.065,.025);l.position.set(sx*.30,1.58,z);group.add(l);lights.push({l,side:sx});}
+ for(const sx of [-1,1]){const l=new THREE.Mesh(GEO.box,blueOff);l.scale.set(.12,.035,.025);l.position.set(sx*.28,.64,2.43);group.add(l);lights.push({l,side:sx});}
  body.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});group.visible=false;c._polBMW={group,orig,wheels,lights};}
 function policeBMWUpdate(){const list=cars.filter(c=>c.police);if(!list.length)return;policeBMWLoad();if(!POLBMW)return;
  const near=list.map(c=>({c,d:Math.hypot(c.pos.x-camera.position.x,c.pos.z-camera.position.z)})).sort((a,b)=>a.d-b.d).filter(q=>q.d<(LOWQ?18:32)).slice(0,LOWQ?1:2).map(q=>q.c);
@@ -5785,12 +5785,12 @@ function update(dt){clockT+=dt;NPCDT=dt;skyMat.uniforms.time.value=clockT;WINDT.
  if(!player.car)updateFoot(dt,inp);
  try{rifleUpdate(dt);}catch(e){console.warn('rifle',e);}
  const F=focusPos();
- policeBMWUpdate();for(const c of cars){const d=Math.hypot(c.pos.x-F.x,c.pos.z-F.z);c.g.visible=d<330;c.setDetail(d<90);
+ for(const c of cars){const d=Math.hypot(c.pos.x-F.x,c.pos.z-F.z);c.g.visible=d<330;c.setDetail(d<90);
   if(c.driver==='player'){c.inp.thr=state==='play'?inp.my:0;c.inp.steer=state==='play'?inp.mx:0;c.inp.hb=state==='play'&&inp.hb&&!(TOUCH&&false);}
   else if(c.chase)policeDrive(c,dt);else if(c.driver==='ai'&&c.ai){if(d>360)continue;aiDrive(c,dt);}else{c.inp.thr=0;c.inp.steer=0;c.inp.hb=true;}
   if(d<380)c.physics(dt);
   if(c.lb){const on=c.chase&&Math.floor(clockT*5)%2===0;for(let i=0;i<c.lb.length;i++)c.lb[i].material=c.chase&&((i%2===0)===on)?blueOn:blueOff;}}
- carPairs();updatePigeons(dt);updateSignals(dt);updateStation(dt);updateTrain(dt);redLight();
+ carPairs();policeBMWUpdate();updatePigeons(dt);updateSignals(dt);updateStation(dt);updateTrain(dt);redLight();
  if(player.car){player.pos.copy(player.car.pos);}
  updatePeds(dt);
  if(state==='play'){managePolice(dt);updateMission(dt);player.hp=Math.min(100,player.hp+dt*1.5);}
