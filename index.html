@@ -139,7 +139,7 @@ body.touch #bMenu{top:calc(212px + env(safe-area-inset-top));padding:6px 14px}
 <div id="speedo" class="hud ingame"></div>
 <div id="prompt" class="hud ingame"></div>
 <div id="big" class="hud"><b></b><span></span></div>
-<div id="keys" class="hud ingame">WASD move / drive · Shift sprint · Space handbrake · E get in/out · H horn · Q rifle · right mouse aim · click fire · R reload · drag to look</div>
+<div id="keys" class="hud ingame">WASD move / drive · Shift sprint · Space handbrake · E get in/out · H horn · Q rifle · right mouse aim · F / click fire · R reload · drag to look</div>
 <div id="joybase"><div id="joyknob"></div></div>
 <button id="bView" class="ingame">BIG BEN</button><button id="bCast" class="ingame">LOCALS</button>
 <div id="castui"><div class="cnum" id="cNum"></div><div class="cname" id="cName"></div><div class="cdesc" id="cDesc"></div>
@@ -154,7 +154,7 @@ body.touch #bMenu{top:calc(212px + env(safe-area-inset-top));padding:6px 14px}
  <div class="lbl">Weather</div><div class="seg"><button data-wx="dry" class="on">Dry</button><button data-wx="cloudy">Grey</button><button data-wx="drizzle">Drizzle</button><button data-wx="rain">Rain</button></div>
  <div class="lbl">Explore</div><button id="pSharp" style="display:none"></button><button id="pMap">Map of London <span style="opacity:.6">(M)</span></button><button id="pBB">Big Ben close-up <span style="opacity:.6">(B)</span></button><button id="pMP">Play with friends 👥</button><button id="pGo">Go to a place… <span style="opacity:.6">(G)</span></button>
  <div class="lbl">Graphics</div><div class="seg"><button data-q="hi">High</button><button data-q="lo">Fast</button></div>
- <div class="lbl">Controls</div><table><tr><td>Move / drive</td><td>WASD or arrows</td></tr><tr><td>Sprint</td><td>Shift</td></tr><tr><td>Get in / out · board train</td><td>E</td></tr><tr><td>Handbrake</td><td>Space</td></tr><tr><td>Horn</td><td>H</td></tr><tr><td>Rifle: draw / sling</td><td>Q</td></tr><tr><td>Aim · fire</td><td>Hold right mouse · left click</td></tr><tr><td>Reload</td><td>R</td></tr><tr><td>Map</td><td>M</td></tr><tr><td>Pause</td><td>Esc or P</td></tr><tr><td>Look around</td><td>Drag</td></tr></table></div></div>
+ <div class="lbl">Controls</div><table><tr><td>Move / drive</td><td>WASD or arrows</td></tr><tr><td>Sprint</td><td>Shift</td></tr><tr><td>Get in / out · board train</td><td>E</td></tr><tr><td>Handbrake</td><td>Space</td></tr><tr><td>Horn</td><td>H</td></tr><tr><td>Rifle: draw / sling</td><td>Q</td></tr><tr><td>Aim · fire</td><td>Hold right mouse · F or left click</td></tr><tr><td>Reload</td><td>R</td></tr><tr><td>Map</td><td>M</td></tr><tr><td>Pause</td><td>Esc or P</td></tr><tr><td>Look around</td><td>Drag</td></tr></table></div></div>
 <div id="bigmap" class="ovl" role="dialog" aria-label="Map"><div class="mwrap"><canvas id="bmc"></canvas><div class="mt">Westminster <span id="bmSub">You are the red arrow · drag to pan</span></div><button id="bmClose">Close</button></div></div>
 <div id="mp" class="ovl" role="dialog" aria-label="Play with friends"><div class="pbox"><h2>Play with friends</h2>
 <div class="lbl">Your name</div><input id="mpName" maxlength="16" placeholder="Your name" autocomplete="nickname">
@@ -207,7 +207,7 @@ const $=id=>document.getElementById(id);
 if(typeof THREE==='undefined'){ $('loading').textContent='The 3D engine could not load. Check your connection and reload.'; throw new Error('three missing'); }
 const TOUCH=matchMedia('(pointer:coarse)').matches||('ontouchstart' in window&&!matchMedia('(pointer:fine)').matches);
 if(TOUCH)document.body.classList.add('touch');
-$('ctl').textContent=TOUCH?'Left thumb: move or drive. Right side: drag to look. Buttons: get in/out, run or handbrake, horn, rifle (then aim and fire).':'WASD or arrows to move and drive · Shift to sprint · Space handbrake · E to get in or out · H horn · Q rifle, hold right mouse to aim, click to fire, R reload · drag the mouse to look around.';
+$('ctl').textContent=TOUCH?'Left thumb: move or drive. Right side: drag to look. Buttons: get in/out, run or handbrake, horn, rifle (then aim and fire).':'WASD or arrows to move and drive · Shift to sprint · Space handbrake · E to get in or out · H horn · Q rifle, hold right mouse to aim, F or click to fire, R reload · drag the mouse to look around.';
 const LOWQ=TOUCH;
 const V3=THREE.Vector3, PI=Math.PI;
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -5279,7 +5279,7 @@ AU.owl=function(nr){const f=380+Math.random()*40,pan=(Math.random()-.5)*1.4;this
 
 /* ---------- input ---------- */
 const keys={};let enterQ=false,hornQ=false;
-addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(!keys[k]&&(k==='escape'||k==='p')&&(state==='play'||state==='pause')&&!document.body.classList.contains('viewing')){togglePause();keys[k]=true;return;}if(!keys[k]&&k==='m'&&(state==='play'||state==='pause')){toggleMap();keys[k]=true;return;}if(!keys[k]&&k==='g'&&state==='play'){openTravel();keys[k]=true;return;}if(!keys[k]){if(k==='e'||k==='f'||k==='enter')enterQ=true;if(k==='h')hornQ=true;if(k==='q')rifleToggle();if(k==='r')rifleReload();if(k==='b'){state==='view'?exitView():enterView();}if(k==='escape'){exitView();closeCast();}if(state==='cast'){if(k==='arrowright')castStep(1);if(k==='arrowleft')castStep(-1);}if(k==='g'&&ssao)setSSAO(!ssao.enabled);if(state==='view'&&(k==='1'||k==='2'||k==='3'))setTOD(['day','dusk','night'][+k-1]);}keys[k]=true;if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();});
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(!keys[k]&&(k==='escape'||k==='p')&&(state==='play'||state==='pause')&&!document.body.classList.contains('viewing')){togglePause();keys[k]=true;return;}if(!keys[k]&&k==='m'&&(state==='play'||state==='pause')){toggleMap();keys[k]=true;return;}if(!keys[k]&&k==='g'&&state==='play'){openTravel();keys[k]=true;return;}if(!keys[k]){if(k==='e'||k==='enter')enterQ=true;if(k==='f'&&state==='play')rifleFire();if(k==='h')hornQ=true;if(k==='q')rifleToggle();if(k==='r')rifleReload();if(k==='b'){state==='view'?exitView():enterView();}if(k==='escape'){exitView();closeCast();}if(state==='cast'){if(k==='arrowright')castStep(1);if(k==='arrowleft')castStep(-1);}if(k==='g'&&ssao)setSSAO(!ssao.enabled);if(state==='view'&&(k==='1'||k==='2'||k==='3'))setTOD(['day','dusk','night'][+k-1]);}keys[k]=true;if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();});
 addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false;RIF.btnL=RIF.btnR=false;});
 const joy={id:null,x:0,y:0,bx:0,by:0};let actHeld=false;
