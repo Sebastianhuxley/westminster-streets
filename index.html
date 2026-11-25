@@ -4886,11 +4886,41 @@ function placePed(p,minD,maxD){const P=focusPos();for(let k=0;k<40;k++){const ei
 /* ---- photo-real vehicle models (GLB) ---- */
 const RRA={xc:.041,yc:.016,zc:-.333};var RRT=null;
 function rrLoad(){if(!THREE.GLTFLoader)return;const L=new THREE.GLTFLoader(),got={};
- const done=()=>{if(!got.hi||!got.lo)return;RRT=got;for(const c of cars)if(c.type==='suv')try{rrUpgrade(c);}catch(e){console.error(e);}};
+ const done=()=>{if(!got.hi||!got.lo)return;RRT=got;for(const c of cars){if(c.type==='suv')try{rrUpgrade(c);}catch(e){console.error(e);}else try{carShade(c.g);}catch(e){}}};
  for(const k of ['hi','lo'])L.load('rr_'+k+'.glb',g=>{const T={body:null,wheel:null,brake:null,wheels:{}};g.scene.updateMatrixWorld(true);
-  g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const m=o.material;if(m&&m.isMeshStandardMaterial){m.envMapIntensity=1;if(/glass/i.test(m.name)&&m.transparent){m.depthWrite=false;}}}});
+  g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const m=o.material;if(m&&m.isMeshStandardMaterial&&!m.userData.rrFix)rrFixMat(m);}});
   for(const n of g.scene.children){const nn=n.name.replace(/_/g,' ');if(nn==='Body')T.body=n;else if(nn==='FL Wheel')T.wheel=n;else if(nn==='FL Brake')T.brake=n;}if(!T.body||!T.wheel){console.warn('rr nodes',g.scene.children.map(n=>n.name));return;}
   got[k]=T;done();},undefined,e=>console.warn('rr load',e));}
+
+
+/* reflections that respect building shadows: dim env reflections where the sun is blocked */
+function shadeRefl(m){if(!m||!m.isMeshStandardMaterial||m.userData.shRefl)return;m.userData.shRefl=1;const prev=m.onBeforeCompile,k0=m.customProgramCacheKey();
+ m.onBeforeCompile=function(sh,r){if(prev)prev.call(this,sh,r);let f=sh.fragmentShader;if(f.indexOf('#include <lights_fragment_begin>')<0)return;
+  let b=THREE.ShaderChunk.lights_fragment_begin;const re=/directLight\.color \*= all\( bvec2\( directLight\.visible, receiveShadow \) \) \? (getShadow\( directionalShadowMap\[ i \][^;]*?) : 1\.0;/;
+  if(!re.test(b))return;b=b.replace(re,(a,g)=>'rrS_ = all( bvec2( directLight.visible, receiveShadow ) ) ? '+g+' : 1.0; directLight.color *= rrS_; rrSh = min( rrSh, rrS_ );');
+  f=f.replace('#include <lights_fragment_begin>','float rrSh = 1.0; float rrS_ = 1.0;\n'+b);
+  f=f.replace('#include <lights_fragment_end>','#if defined( RE_IndirectSpecular )\n{ float rk_ = mix( 0.22, 1.0, rrSh ); radiance *= rk_; clearcoatRadiance *= rk_; }\n#endif\n#include <lights_fragment_end>');
+  sh.fragmentShader=f;};
+ m.customProgramCacheKey=()=>k0+'|shr';m.needsUpdate=true;}
+function carShade(o){o.traverse(k=>{if(!k.isMesh)return;k.receiveShadow=true;const ms=Array.isArray(k.material)?k.material:[k.material];for(const m of ms){if(!m||!m.isMeshStandardMaterial)continue;try{if(CITYU.tCityH.value)cityAOWrap(m);}catch(e){}shadeRefl(m);}});}
+const RRHEAD=[];
+function rrFixMat(m){m.userData.rrFix=1;const n=(m.name||'').trim().toLowerCase();let refl=0,env=.7;
+ const set=(me,ro)=>{m.metalness=me;m.roughness=ro;};
+ if(n==='glass'){set(.05,.06);m.color.setRGB(.035,.04,.045);refl=1.1;if(m.clearcoat!=null)m.clearcoat=0;}
+ else if(n==='trasnsparent glass'){set(0,.05);m.depthWrite=false;refl=.9;}
+ else if(n==='black metal'){set(.25,.32);m.color.setRGB(.012,.012,.014);env=.6;}
+ else if(n==='plastic'){set(.1,.62);env=.45;}
+ else if(n==='metalic'){set(1,.2);m.color.setRGB(.55,.56,.58);refl=.9;}
+ else if(n==='mirror'){set(1,.03);refl=1;}
+ else if(n==='yellow glass'){set(0,.15);m.emissive&&m.emissive.setRGB(0,0,0);}
+ else if(n==='red metal'){set(.6,.35);}
+ else if(n==='tyre'){set(0,.85);env=.3;}
+ else if(n==='carbon'){m.metalness=Math.min(m.metalness,.3);m.roughness=Math.max(m.roughness,.35);env=.6;}
+ else if(n==='head light'){set(.1,.15);m.emissive.setRGB(1,.97,.9);m.emissiveIntensity=0;RRHEAD.push(m);refl=.8;}
+ else if(n==='tail light'){set(.1,.12);}
+ if(m.clearcoat){m.clearcoat=Math.min(m.clearcoat,.5);m.clearcoatRoughness=Math.max(m.clearcoatRoughness||0,.08);}
+ if(refl){addRefl(m,refl);m.envMapIntensity=refl*(todName==='night'?.55:todName==='dusk'?1.0:1.25);}else{const p=TOD[todName]||{env:1};m.userData.env=env;m.envMapIntensity=env*(p.env||1);}
+ m.needsUpdate=true;}
 function rrP(x,y,z){return new THREE.Vector3(-(z-RRA.zc),y-RRA.yc,x-RRA.xc);}
 function rrHolder(n,paint){const h=new THREE.Group();h.rotation.y=-PI/2;const o=n.clone();h.add(o);
  const meshes=[];o.traverse(k=>{if(k.isMesh){meshes.push(k);if(paint&&/paint/i.test(k.material.name))k.material=paint;}});return {h,o,meshes};}
@@ -4911,7 +4941,8 @@ function rrUpgrade(c){if(c.rr||!RRT)return;c.rr=1;const inner=c.body.children[0]
   if(front&&RRT.hi.brake){const h=new THREE.Group();h.rotation.y=-PI/2;const o=RRT.hi.brake.clone();o.position.set(0,0,0);if(right)o.rotation.y+=PI;h.add(o);hub.add(h);}
   W.push({hub,spin,rim:new THREE.Object3D(),front:!!front});}
  c.wheels=W;
- c.tail={set material(m){for(const t of tails)t.material=m;}};c.indL=null;c.indR=null;c.revM=null;c.det=heads;
+ c.tail={set material(m){for(const t of tails)t.material=m;const hi=todName==='day'?0:todName==='dusk'?1.6:2.6;if(RRHEAD.length&&RRHEAD[0].emissiveIntensity!==hi)for(const h of RRHEAD)h.emissiveIntensity=hi;}};c.indL=null;c.indR=null;c.revM=null;c.det=heads;
+ try{carShade(c.g);}catch(e){console.warn('shade',e);}
  }
 rrLoad();
 function focusPos(){return player.car?player.car.pos:player.pos;}
