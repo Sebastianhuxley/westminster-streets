@@ -4410,7 +4410,7 @@ function buildWorld(){
  const parks=[[-560,-548,-116,-170],[-90,-148,-40,-97],[-15,138,56,313],[262,-430,280,-300],[-212,42,-136,138]];
  parks.forEach(p=>plane(GR,p[0],p[1],p[2],p[3],.04,8));
  const lake=new THREE.CircleGeometry(1,48);lake.rotateX(-PI/2);lake.scale(150,1,34);lake.translate(-330,.1,-360);MG('pond').geo(lake);
- palaceHQ();abbeyHQ();centralHall();supremeCourt();whitehallHQ();streetHQ();
+ palaceHQ();bigBen(42,-140);abbeyHQ();centralHall();supremeCourt();whitehallHQ();streetHQ();
  // 70 Whitehall, the Cabinet Office: Barry's 1845–47 Italianate front, rusticated ground floor, engaged Corinthian columns
  cBlock(-90,-420,-43,-386,18,['E','N'],{rustH:5,floors:[['clA',2.6],['clP',8.6],['cl',13.4,.9]],bal:1},0);
  {const P=MG('paAshlar');for(let z=-417;z<=-389;z+=4){column(P,-42.3,z,5.4,8.8,.42,'cor');}box(P,-43,14.1,-420,-41.7,15,-386,2,1,P);
