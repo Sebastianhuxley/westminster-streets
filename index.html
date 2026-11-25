@@ -1299,33 +1299,57 @@ function emitTree(T,lod){const S=T.S,bark=tbNew(),leaf=tbNew(),R=mkRng(99+lod);c
 function speciesAt(x,z){const h=Math.abs(Math.sin(x*12.9898+z*78.233)*43758.5453)%1;
  const lake=((x+330)/176)**2+((z+360)/58)**2<1;
  if(x<-3000){if(Math.abs(Math.abs(x+4256)-15)<1.6)return ['lime',1.05];if(Math.abs(Math.abs(x+4256)-8)<1.6)return ['maple',.95]; // Broad Walk: outer limes, inner Norway maples
-  return h<.52?['plane',1.08]:h<.72?['lime',1]:h<.87?['chest',1]:h<.94?['maple',.95]:['haw',1];}
+  return h<.42?['plane',1.08]:h<.58?['oak',1.35]:h<.72?['lime',1]:h<.87?['chest',1]:h<.94?['maple',.95]:['haw',1];}
  if(Math.abs(z+577)<1.2||Math.abs(z+545.5)<1.2)return ['plane',1.2]; // The Mall: Victorian planes
  if(Math.abs(x-57.6)<1.2||Math.abs(x-270)<1.2||(Math.abs(x-52)<1.2&&z>140))return ['plane',1.12]; // Embankments, Victoria Tower Gardens
  if(lake)return h<.55?['willow',1]:h<.8?['plane',1]:['haw',1];
- if(x>-610&&x<-440&&z>-840&&z<-590)return h<.8?['plane',1.1]:h<.9?['lime',1]:['haw',1]; // Green Park: planes, silver limes, hawthorn
- if(x<-630&&x>-845&&z<-630)return h<.55?['plane',1.05]:h<.72?['lime',1]:h<.88?['chest',1]:['haw',1]; // Palace garden
- if(x>-560&&x<-120&&z>-545&&z<-175)return h<.8?['plane',1.05]:h<.9?['haw',1]:h<.95?['lime',1]:['chest',1]; // St James's Park
+ if(x>-610&&x<-440&&z>-840&&z<-590)return h<.68?['plane',1.1]:h<.8?['oak',1.3]:h<.9?['lime',1]:['haw',1]; // Green Park: planes, silver limes, hawthorn
+ if(x<-630&&x>-845&&z<-630)return h<.4?['plane',1.05]:h<.6?['oak',1.4]:h<.72?['lime',1]:h<.88?['chest',1]:['haw',1]; // Palace garden
+ if(x>-560&&x<-120&&z>-545&&z<-175)return h<.66?['plane',1.05]:h<.82?['oak',1.3]:h<.9?['haw',1]:h<.95?['lime',1]:['chest',1]; // St James's Park
  return ['plane',.95];}
+
+/* ---- photo-real oak (GLB) swapped into the instanced tree system ---- */
+function oakLoad(){if(!THREE.GLTFLoader||!TREEV.some(v=>v.k==='oak'))return;new THREE.GLTFLoader().load('tree_oak.glb',g=>{try{oakBuild(g);}catch(e){console.error('oak build '+e.stack);}},undefined,e=>console.warn('oak load',e));}
+function oakBuild(g){
+ g.scene.updateMatrixWorld(true);const parts={bark:[],leaf:[]};let barkMap=null,leafMap=null;
+ g.scene.traverse(o=>{if(!o.isMesh)return;const geo=o.geometry.clone();geo.applyMatrix4(o.matrixWorld);const isB=/bark|wood/i.test(o.material.name||o.name);(isB?parts.bark:parts.leaf).push(geo);
+  if(isB)barkMap=o.material.map;else if(!leafMap||/oak$/i.test(o.material.name))leafMap=leafMap||o.material.map;});
+ // merge, recentre on trunk base, scale to metres
+ const merge=L=>{let n=0,ni=0;for(const q of L){n+=q.attributes.position.count;ni+=q.index?q.index.count:q.attributes.position.count;}const P=new Float32Array(n*3),N=new Float32Array(n*3),U=new Float32Array(n*2),I=new Uint32Array(ni);let o=0,oi=0;
+  for(const q of L){const c=q.attributes.position.count,qa=q.attributes;for(let i=0;i<c;i++){const j=o+i;P[j*3]=qa.position.getX(i);P[j*3+1]=qa.position.getY(i);P[j*3+2]=qa.position.getZ(i);if(qa.normal){N[j*3]=qa.normal.getX(i);N[j*3+1]=qa.normal.getY(i);N[j*3+2]=qa.normal.getZ(i);}if(qa.uv){U[j*2]=qa.uv.getX(i);U[j*2+1]=qa.uv.getY(i);}}const ix=q.index?q.index.array:[...Array(c).keys()];for(let i=0;i<ix.length;i++)I[oi++]=ix[i]+o;o+=c;}return {P,N,U,I};};
+ const B=merge(parts.bark),Lf=merge(parts.leaf);let x0=0,z0=0,y0=1e9,cnt=0,ymax=-1e9;for(let i=0;i<B.P.length;i+=3)y0=Math.min(y0,B.P[i+1]);for(const A of [B,Lf])for(let i=0;i<A.P.length;i+=3)ymax=Math.max(ymax,A.P[i+1]);
+ for(let i=0;i<B.P.length;i+=3)if(B.P[i+1]<y0+.4){x0+=B.P[i];z0+=B.P[i+2];cnt++;}x0/=cnt||1;z0/=cnt||1;const H=ymax-y0,S=13/H;
+ const mk=(A,leaf,keep)=>{const nv=A.P.length/3;const p=[],nn=[],u=[],c=[],w=[],f=[],ix=[];for(let i=0;i<nv;i++){const x=(A.P[i*3]-x0)*S,y=(A.P[i*3+1]-y0)*S,z=(A.P[i*3+2]-z0)*S;p.push(x,y,z);nn.push(A.N[i*3],A.N[i*3+1],A.N[i*3+2]);u.push(A.U[i*2],A.U[i*2+1]);c.push(1,1,1);
+   const r=Math.hypot(x,z),ph=(Math.atan2(z,x)*3.1+y*.37)%6.28;w.push(ph,leaf?Math.min(1,r/5)*.9:Math.min(1,r/6)*.5*Math.min(1,y/6),ph*2.3,leaf?.5:0);f.push(leaf?.55:0);}
+  for(let t=0;t<A.I.length;t+=3){if(keep<1){const h=Math.abs(Math.sin(t*12.9898))%1;if(h>keep)continue;}ix.push(A.I[t],A.I[t+1],A.I[t+2]);}
+  const gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.Float32BufferAttribute(p,3));gg.setAttribute('normal',new THREE.Float32BufferAttribute(nn,3));gg.setAttribute('uv',new THREE.Float32BufferAttribute(u,2));gg.setAttribute('color',new THREE.Float32BufferAttribute(c,3));gg.setAttribute('aW',new THREE.Float32BufferAttribute(w,4));gg.setAttribute('aF',new THREE.Float32BufferAttribute(f,1));gg.setIndex(ix);gg.computeBoundingSphere();return gg;};
+ const gB=mk(B,false,1),gL=mk(Lf,true,1),gBf=mk(B,false,.5),gLf=mk(Lf,true,.45);
+ if(leafMap){leafMap.encoding=THREE.sRGBEncoding;leafMap.anisotropy=4;}if(barkMap){barkMap.encoding=THREE.sRGBEncoding;}
+ const LM=windTree(std({map:leafMap,alphaTest:.45,side:THREE.DoubleSide,roughness:.8,metalness:0,vertexColors:true}),true);LM.shadowSide=THREE.DoubleSide;
+ const LD=windTree(new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map:leafMap,alphaTest:.45,side:THREE.DoubleSide}),true);
+ const BMm=windTree(std({map:barkMap,color:lin(0x6e6253),roughness:.92,metalness:0,vertexColors:true}),false);
+ for(const v of TREEV){if(v.k!=='oak')continue;v.hb.geometry=gB;v.hl.geometry=gL;v.lb.geometry=gBf;v.ll.geometry=gLf;v.hb.material=v.lb.material=BMm;v.hl.material=v.ll.material=LM;v.hl.customDepthMaterial=LD;v.ll.customDepthMaterial=LD;
+  for(let i=0;i<v.n;i++){const h=.7+.14*((i*0.618)%1);v.cols[i*3]=h*.9;v.cols[i*3+1]=h;v.cols[i*3+2]=h*.8;}}
+ treeLOD(camera.position.x,camera.position.z);}
 const TREEV=[],NOAO=[];let treeLT=0,treeLP=new V3(1e9,0,0);
-function buildTrees(){for(let i=TREES.length-1;i>=0;i--){const [x,z]=TREES[i];if(VFOOT.some(f=>x>f[0]-3&&x<f[2]+3&&z>f[1]-3&&z<f[3]+3))TREES.splice(i,1);}const VAR={plane:[11,29,57],lime:[5,17],chest:[3],maple:[23],haw:[7,13],willow:[83,91]};
+function buildTrees(){for(let i=TREES.length-1;i>=0;i--){const [x,z]=TREES[i];if(VFOOT.some(f=>x>f[0]-3&&x<f[2]+3&&z>f[1]-3&&z<f[3]+3))TREES.splice(i,1);}const VAR={oak:[1],plane:[11,29,57],lime:[5,17],chest:[3],maple:[23],haw:[7,13],willow:[83,91]};
  const LM=windTree(std({map:leafAtlas(),alphaTest:.5,side:THREE.DoubleSide,roughness:.82,metalness:0,vertexColors:true}),true);LM.shadowSide=THREE.DoubleSide;
  const LD=windTree(new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map:LM.map,alphaTest:.5,side:THREE.DoubleSide}),true);
  const BD=windTree(new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking}),false);
  const BM={};for(const k of ['plane','lime','chest','maple','haw','willow']){const t=barkTex2(TSPEC[k].bark);BM[k]=windTree(std({map:t.map,bumpMap:t.bump,bumpScale:k==='plane'?.35:1.6,roughness:.93,metalness:0,vertexColors:true}),false);}
  const bucket={};TREES.forEach(([x,z])=>{const [k,s]=speciesAt(x,z);const vs=VAR[k],h=Math.abs(Math.floor(x*7.13+z*3.71));const key=k+'|'+vs[h%vs.length];(bucket[key]=bucket[key]||[]).push([x,z,s]);
-  const tr=TSPEC[k].tr[1]*s*1.25;if(!(typeof onRoad==='function'&&onRoad(x,z)))addCol(x-tr,z-tr,x+tr,z+tr,6);});
+  const tr=TSPEC[k==='oak'?'plane':k].tr[1]*s*1.25;if(!(typeof onRoad==='function'&&onRoad(x,z)))addCol(x-tr,z-tr,x+tr,z+tr,6);});
  const M4=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),sc=new V3(),ps=new V3(),col=new THREE.Color();
- for(const key in bucket){const [k,sd]=key.split('|'),L=bucket[key],n=L.length;const T=genTree(k,+sd),G0=emitTree(T,0),G1=emitTree(T,1);
+ for(const key in bucket){const [k,sd]=key.split('|'),L=bucket[key],n=L.length;const T=genTree(k==='oak'?'plane':k,k==='oak'?11:+sd),G0=emitTree(T,0),G1=emitTree(T,1);
   const mat=new Float32Array(n*16),cols=new Float32Array(n*3),pos=new Float32Array(n*2);
   L.forEach(([x,z,s],i)=>{const h1=Math.abs(Math.sin(x*3.17+z*5.3))%1,h2=Math.abs(Math.sin(x*1.3-z*2.9))%1;e.set((h2-.5)*.05,(x*3.1+z*1.7)%6.28,(h1-.5)*.05);q.setFromEuler(e);const S=s*(.86+.28*h1);M4.compose(ps.set(x,0,z),q,sc.set(S,S,S));M4.toArray(mat,i*16);
    col.setHSL(.24+(h2-.5)*.04,.5+(h1-.5)*.2,.52+(h1-.5)*.12);cols.set([col.r,col.g,col.b],i*3);pos[i*2]=x;pos[i*2+1]=z;});
   const mk=(geo,m,dm,cnt)=>{const o=new THREE.InstancedMesh(geo,m,cnt);o.frustumCulled=false;o.castShadow=true;o.receiveShadow=true;o.customDepthMaterial=dm;o.count=0;scene.add(o);return o;};
-  const v={k,n,mat,pos,cols};v.hb=mk(G0.bark,BM[k],BD,n);v.hl=mk(G0.leaf,LM,LD,n);v.lb=mk(G1.bark,BM[k],BD,n);v.ll=mk(G1.leaf,LM,LD,n);v.lb.castShadow=v.ll.castShadow=false;
+  const v={k,n,mat,pos,cols};v.hb=mk(G0.bark,BM[k]||BM.plane,BD,n);v.hl=mk(G0.leaf,LM,LD,n);v.lb=mk(G1.bark,BM[k]||BM.plane,BD,n);v.ll=mk(G1.leaf,LM,LD,n);v.lb.castShadow=v.ll.castShadow=false;
   v.hl.instanceMatrix=v.hb.instanceMatrix;v.ll.instanceMatrix=v.lb.instanceMatrix;for(const o of [v.hb,v.lb])o.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   v.hl.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(n*3),3);v.ll.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(n*3),3);
   NOAO.push(v.hl,v.ll);TREEV.push(v);}
- treeLOD(camera.position.x,camera.position.z);}
+ treeLOD(camera.position.x,camera.position.z);try{oakLoad();}catch(e){console.warn('oak',e);}}
 function treeLOD(cx,cz){let near=0;const TH2=95*95,TF2=720*720;for(const v of TREEV){let nh=0,nl=0;const hm=v.hb.instanceMatrix.array,lm=v.lb.instanceMatrix.array,hc=v.hl.instanceColor.array,lc=v.ll.instanceColor.array;
   for(let k=0;k<v.n;k++){const dx=v.pos[k*2]-cx,dz=v.pos[k*2+1]-cz,d2=dx*dx+dz*dz;if(d2<1600)near+=1/(1+d2/120);const m=v.mat.subarray(k*16,k*16+16),c=v.cols.subarray(k*3,k*3+3);
    if(d2<TH2){hm.set(m,nh*16);hc.set(c,nh*3);nh++;}else if(d2<TF2){lm.set(m,nl*16);lc.set(c,nl*3);nl++;}}
@@ -4663,7 +4687,7 @@ class Car{constructor(type,x,z,h,hex){this.id=carId++;this.type=type;this.s=SPEC
  const m=makeCarMesh(type,col,metal);Object.assign(this,m);this.revM=m.rev;delete this.rev;
  this.pos=new V3(x,0,z);this.h=h;this.vx=0;this.vz=0;this.vf=0;this.steer=0;this.inp={thr:0,steer:0,hb:false};this.driver=null;this.ai=null;this.police=type==='police';this.chase=false;this.stuck=0;this.rev=0;this.blockT=0;this.cruise=type==='bus'?8:rr(10,13.5);
  this.pitch=0;this.roll=0;this.pv=0;this.rv=0;this.pvf=0;this.ph=h;this.indic=0;this.detOn=true;
- const n=Math.max(2,Math.ceil(this.s.L/(this.s.W*1.05)));this.circ=[];for(let i=0;i<n;i++)this.circ.push(-(this.s.L/2-this.s.W/2)+i*(this.s.L-this.s.W)/(n-1));this.cr=this.s.W/2+.05;this.mass=type==='bus'?5:type==='van'||type==='suv'||type==='offroad'?1.4:1;cars.push(this);this.sync();if(RRT&&type==='suv')try{rrUpgrade(this);}catch(e){console.error(e);}}
+ const n=Math.max(2,Math.ceil(this.s.L/(this.s.W*1.05)));this.circ=[];for(let i=0;i<n;i++)this.circ.push(-(this.s.L/2-this.s.W/2)+i*(this.s.L-this.s.W)/(n-1));this.cr=this.s.W/2+.05;this.mass=type==='bus'?5:type==='van'||type==='suv'||type==='offroad'?1.4:1;cars.push(this);this.sync();try{vehAssign(this);}catch(e){}if(RRT&&type==='suv'&&(this.vm||'rr')==='rr')try{rrUpgrade(this);}catch(e){console.error(e);}}
  sync(){const t=groundS(this.pos.x,this.pos.z);this.gy=this.gy==null?t:this.gy+(t-this.gy)*.35;this.g.position.set(this.pos.x,this.gy,this.pos.z);this.g.rotation.y=this.h;}
  physics(dt){const s=this.s,inp=this.inp;const fx=Math.sin(this.h),fz=Math.cos(this.h),rx=-fz,rz=fx;let vf=this.vx*fx+this.vz*fz,vr=this.vx*rx+this.vz*rz;const t=inp.thr;
   if(t>.02){if(vf<-.4)vf=Math.min(0,vf+s.brake*t*dt);else vf+=s.acc*t*dt*Math.max(0,1-vf/s.max);}
@@ -4886,7 +4910,7 @@ function placePed(p,minD,maxD){const P=focusPos();for(let k=0;k<40;k++){const ei
 /* ---- photo-real vehicle models (GLB) ---- */
 const RRA={xc:.041,yc:.016,zc:-.333};var RRT=null;
 function rrLoad(){if(!THREE.GLTFLoader)return;const L=new THREE.GLTFLoader(),got={};
- const done=()=>{if(!got.hi||!got.lo)return;RRT=got;for(const c of cars){if(c.type==='suv')try{rrUpgrade(c);}catch(e){console.error(e);}else try{carShade(c.g);}catch(e){}}};
+ const done=()=>{if(!got.hi||!got.lo)return;RRT=got;for(const c of cars){if(c.type==='suv'&&(c.vm||'rr')==='rr')try{rrUpgrade(c);}catch(e){console.error(e);}else try{carShade(c.g);}catch(e){}}};
  for(const k of ['hi','lo'])L.load('rr_'+k+'.glb',g=>{const T={body:null,wheel:null,brake:null,wheels:{}};g.scene.updateMatrixWorld(true);
   g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const m=o.material;if(m&&m.isMeshStandardMaterial&&!m.userData.rrFix)rrFixMat(m);}});
   for(const n of g.scene.children){const nn=n.name.replace(/_/g,' ');if(nn==='Body')T.body=n;else if(nn==='FL Wheel')T.wheel=n;else if(nn==='FL Brake')T.brake=n;}if(!T.body||!T.wheel){console.warn('rr nodes',g.scene.children.map(n=>n.name));return;}
@@ -4944,6 +4968,48 @@ function rrUpgrade(c){if(c.rr||!RRT)return;c.rr=1;const inner=c.body.children[0]
  c.tail={set material(m){for(const t of tails)t.material=m;const hi=todName==='day'?0:todName==='dusk'?1.6:2.6;if(RRHEAD.length&&RRHEAD[0].emissiveIntensity!==hi)for(const h of RRHEAD)h.emissiveIntensity=hi;}};c.indL=null;c.indR=null;c.revM=null;c.det=heads;
  try{carShade(c.g);}catch(e){console.warn('shade',e);}
  }
+
+/* ---- baked photo-real cars (carbake format: front +Z, left +X, ground 0) ---- */
+const VEHM={a7:{rim:0x6b7076,rimM:1,cal:0x1a1a1c},s90:{rim:0xb8bcc2,rimM:1,cal:0x8a8d92},rsq8:{rim:0x2a2c30,rimM:.8,cal:0xc4161c}};
+const VEHFOR={saloon:['a7','s90','s90'],suv:['rr','rsq8']};
+const VEHT={},VEHQ={};let VEHMAT=null;
+function vehMats(){if(VEHMAT)return VEHMAT;const P=(o)=>{const m=new THREE.MeshPhysicalMaterial(o);return m;};
+ VEHMAT={trim:P({color:lin(0x0a0a0b),metalness:.15,roughness:.42,clearcoat:.3,clearcoatRoughness:.2}),
+  chrome:new THREE.MeshStandardMaterial({color:lin(0xd0d3d6),metalness:1,roughness:.12}),
+  glass:P({color:lin(0x0b0d10),metalness:.05,roughness:.04,clearcoat:1,clearcoatRoughness:.02}),
+  head:new THREE.MeshStandardMaterial({color:lin(0xc8ccd0),metalness:.85,roughness:.12,emissive:new THREE.Color(1,.97,.9),emissiveIntensity:0}),
+  plate:new THREE.MeshStandardMaterial({color:lin(0xe8e6de),roughness:.55}),
+  tyre:new THREE.MeshStandardMaterial({color:lin(0x18191a),roughness:.88,metalness:0}),
+  disc:new THREE.MeshStandardMaterial({color:lin(0x7a7c80),metalness:1,roughness:.45})};
+ addRefl(VEHMAT.chrome,.95);addRefl(VEHMAT.glass,1.1);addRefl(VEHMAT.head,.8);RRHEAD.push(VEHMAT.head);
+ for(const k in VEHMAT){const m=VEHMAT[k];if(m.userData.env0==null){m.userData.env=.6;}}
+ return VEHMAT;}
+function vehLoad(key,cb){if(VEHT[key])return cb(VEHT[key]);if(VEHQ[key]){VEHQ[key].push(cb);return;}VEHQ[key]=[cb];
+ if(!THREE.GLTFLoader)return;const L=new THREE.GLTFLoader(),got={};
+ for(const lv of ['hi','lo'])L.load('veh_'+key+'_'+lv+'.glb',g=>{const S={body:null,W:{},C:{}};
+   for(const n of g.scene.children){const nm=n.name.replace(/_/g,' ').trim();if(nm==='body')S.body=n;else if(/^W /.test(nm))S.W[nm.slice(2)]=n;else if(/^C /.test(nm))S.C[nm.slice(2)]=n;}
+   got[lv]=S;if(got.hi&&got.lo){VEHT[key]=got;for(const f of VEHQ[key])try{f(got);}catch(e){console.error(e);}VEHQ[key]=[];}},undefined,e=>console.warn('veh',key,e));}
+function vehCat(m){const n=(m&&m.name)||'';return n.indexOf('cat:')===0?n.slice(4):null;}
+function vehUpgrade(c,key,T){if(c.vk)return;c.vk=key;const cfg=VEHM[key]||{},M=vehMats(),inner=c.body.children[0];
+ let paint=null;for(const k of inner.children)if(k.isMesh&&k.visible!==false){paint=k.material;break;}
+ for(const k of inner.children)if(k!==c.drv)k.visible=false;
+ if(!cfg._rim){cfg._rim=new THREE.MeshStandardMaterial({color:lin(cfg.rim||0x9a9ea4),metalness:cfg.rimM!=null?cfg.rimM:1,roughness:.28});addRefl(cfg._rim,.8);
+  cfg._cal=new THREE.MeshStandardMaterial({color:lin(cfg.cal||0x222222),metalness:.3,roughness:.35});}
+ const tails=[];const matFor=(m)=>{const k=vehCat(m);if(k==='paint')return paint||M.trim;if(k==='tail')return tailOff;if(k==='rim')return cfg._rim;if(k==='caliper')return cfg._cal;return M[k]||M.trim;};
+ const dress=(o)=>{o.traverse(k=>{if(!k.isMesh)return;const cat=vehCat(k.material);k.material=matFor(k.material);k.castShadow=true;k.receiveShadow=true;if(cat==='tail')tails.push(k);});return o;};
+ const lod=new THREE.LOD();for(const [lv,d] of [['hi',0],['lo',LOWQ?22:40]]){const b=T[lv].body.clone();b.position.set(0,0,0);dress(b);lod.addLevel(b,d);}
+ inner.add(lod);
+ for(const w of c.wheels)c.g.remove(w.hub);
+ const W=[];for(const q of ['FL','FR','RL','RR']){const src=T.hi.W[q];if(!src)continue;const hub=new THREE.Group();hub.rotation.order='YXZ';hub.position.copy(src.position);c.g.add(hub);
+  const spin=new THREE.Group();hub.add(spin);const wl=new THREE.LOD();
+  for(const [lv,d] of [['hi',0],['lo',LOWQ?16:30]]){const o=T[lv].W[q].clone();o.position.set(0,0,0);dress(o);wl.addLevel(o,d);}spin.add(wl);
+  if(T.hi.C[q]){const o=T.hi.C[q].clone();o.position.set(0,0,0);dress(o);hub.add(o);}
+  W.push({hub,spin,rim:new THREE.Object3D(),front:q[0]==='F'});}
+ c.wheels=W;
+ c.tail={set material(m){for(const t of tails)t.material=m;const hi=todName==='day'?0:todName==='dusk'?1.6:2.6;if(RRHEAD.length&&RRHEAD[0].emissiveIntensity!==hi)for(const h of RRHEAD)h.emissiveIntensity=hi;}};
+ c.indL=null;c.indR=null;c.revM=null;c.det=[];
+ try{carShade(c.g);}catch(e){console.warn('shade',e);}}
+function vehAssign(c){const L=VEHFOR[c.type];if(!L||c.vm)return;c.vm=L[Math.random()*L.length|0];if(c.vm==='rr')return;const key=c.vm;vehLoad(key,T=>{try{vehUpgrade(c,key,T);}catch(e){console.error(e);}});}
 rrLoad();
 function focusPos(){return player.car?player.car.pos:player.pos;}
 let starterCab,heistCar=null;
