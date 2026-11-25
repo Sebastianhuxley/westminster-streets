@@ -139,7 +139,7 @@ body.touch #bMenu{top:calc(212px + env(safe-area-inset-top));padding:6px 14px}
 <div id="speedo" class="hud ingame"></div>
 <div id="prompt" class="hud ingame"></div>
 <div id="big" class="hud"><b></b><span></span></div>
-<div id="keys" class="hud ingame">WASD move / drive · Shift sprint · Space handbrake · E get in/out · H horn · Q rifle · right mouse aim · click fire · R reload · drag to look</div>
+<div id="keys" class="hud ingame">WASD move / drive · Shift sprint · Space handbrake · E get in/out · H horn · Q rifle (then just aim with the mouse) · click fire · right mouse zoom · R reload · drag to look</div>
 <div id="joybase"><div id="joyknob"></div></div>
 <button id="bView" class="ingame">BIG BEN</button><button id="bCast" class="ingame">LOCALS</button>
 <div id="castui"><div class="cnum" id="cNum"></div><div class="cname" id="cName"></div><div class="cdesc" id="cDesc"></div>
@@ -154,7 +154,7 @@ body.touch #bMenu{top:calc(212px + env(safe-area-inset-top));padding:6px 14px}
  <div class="lbl">Weather</div><div class="seg"><button data-wx="dry" class="on">Dry</button><button data-wx="cloudy">Grey</button><button data-wx="drizzle">Drizzle</button><button data-wx="rain">Rain</button></div>
  <div class="lbl">Explore</div><button id="pSharp" style="display:none"></button><button id="pMap">Map of London <span style="opacity:.6">(M)</span></button><button id="pBB">Big Ben close-up <span style="opacity:.6">(B)</span></button><button id="pMP">Play with friends 👥</button><button id="pGo">Go to a place… <span style="opacity:.6">(G)</span></button>
  <div class="lbl">Graphics</div><div class="seg"><button data-q="hi">High</button><button data-q="lo">Fast</button></div>
- <div class="lbl">Controls</div><table><tr><td>Move / drive</td><td>WASD or arrows</td></tr><tr><td>Sprint</td><td>Shift</td></tr><tr><td>Get in / out · board train</td><td>E</td></tr><tr><td>Handbrake</td><td>Space</td></tr><tr><td>Horn</td><td>H</td></tr><tr><td>Rifle: draw / sling</td><td>Q</td></tr><tr><td>Aim · fire</td><td>Hold right mouse · left click</td></tr><tr><td>Reload</td><td>R</td></tr><tr><td>Map</td><td>M</td></tr><tr><td>Pause</td><td>Esc or P</td></tr><tr><td>Look around</td><td>Drag</td></tr></table></div></div>
+ <div class="lbl">Controls</div><table><tr><td>Move / drive</td><td>WASD or arrows</td></tr><tr><td>Sprint</td><td>Shift</td></tr><tr><td>Get in / out · board train</td><td>E</td></tr><tr><td>Handbrake</td><td>Space</td></tr><tr><td>Horn</td><td>H</td></tr><tr><td>Rifle: draw / sling</td><td>Q</td></tr><tr><td>Aim</td><td>Automatic once drawn: move the mouse</td></tr><tr><td>Fire</td><td>Left click</td></tr><tr><td>Zoom</td><td>Hold right mouse</td></tr><tr><td>Reload</td><td>R</td></tr><tr><td>Map</td><td>M</td></tr><tr><td>Pause</td><td>Esc or P</td></tr><tr><td>Look around</td><td>Drag</td></tr></table></div></div>
 <div id="bigmap" class="ovl" role="dialog" aria-label="Map"><div class="mwrap"><canvas id="bmc"></canvas><div class="mt">Westminster <span id="bmSub">You are the red arrow · drag to pan</span></div><button id="bmClose">Close</button></div></div>
 <div id="mp" class="ovl" role="dialog" aria-label="Play with friends"><div class="pbox"><h2>Play with friends</h2>
 <div class="lbl">Your name</div><input id="mpName" maxlength="16" placeholder="Your name" autocomplete="nickname">
@@ -169,7 +169,7 @@ body.touch #bMenu{top:calc(212px + env(safe-area-inset-top));padding:6px 14px}
 <div id="ride" class="ovl"><div class="rbox"><div class="rl" id="rideLine"></div><div class="rn">The next station is</div><div class="rs" id="rideNext"></div><div class="rt"></div></div></div>
 <button class="btn" id="bEnter">GET IN</button>
 <button class="btn" id="bAct">RUN</button>
-<button class="btn" id="bHorn">HORN</button><button class="btn" id="bGun">RIFLE</button><button class="btn" id="bAim">AIM</button><button class="btn" id="bFire">FIRE</button><button class="btn" id="bReload">RELOAD</button><div id="xhair" class="ingame" aria-hidden="true"></div><div id="ammo" class="hud ingame"></div>
+<button class="btn" id="bHorn">HORN</button><button class="btn" id="bGun">RIFLE</button><button class="btn" id="bAim">ZOOM</button><button class="btn" id="bFire">FIRE</button><button class="btn" id="bReload">RELOAD</button><div id="xhair" class="ingame" aria-hidden="true"></div><div id="ammo" class="hud ingame"></div>
 <div id="start">
   <h1>Westminster <em>Streets</em></h1>
   <p>An open-world London caper. Start as a black-cab driver beneath Big Ben, run fares around Parliament, the Abbey, Buckingham Palace and the Ritz, ride the Tube to Leicester Square, Kensington or Liverpool Street, then see how long you can outrun the Met.</p>
@@ -207,7 +207,7 @@ const $=id=>document.getElementById(id);
 if(typeof THREE==='undefined'){ $('loading').textContent='The 3D engine could not load. Check your connection and reload.'; throw new Error('three missing'); }
 const TOUCH=matchMedia('(pointer:coarse)').matches||('ontouchstart' in window&&!matchMedia('(pointer:fine)').matches);
 if(TOUCH)document.body.classList.add('touch');
-$('ctl').textContent=TOUCH?'Left thumb: move or drive. Right side: drag to look. Buttons: get in/out, run or handbrake, horn, rifle (then aim and fire).':'WASD or arrows to move and drive · Shift to sprint · Space handbrake · E to get in or out · H horn · Q rifle, hold right mouse to aim, click to fire, R reload · drag the mouse to look around.';
+$('ctl').textContent=TOUCH?'Left thumb: move or drive. Right side: drag to look. Buttons: get in/out, run or handbrake, horn, rifle (then FIRE; ZOOM zooms in).':'WASD or arrows to move and drive · Shift to sprint · Space handbrake · E to get in or out · H horn · Q draws the rifle, then move the mouse to aim, click to fire, hold right mouse to zoom, R reload · drag the mouse to look around.';
 const LOWQ=TOUCH;
 const V3=THREE.Vector3, PI=Math.PI;
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -5292,7 +5292,8 @@ cv.addEventListener('pointermove',e=>{rifleMouse(e);if(PTR.has(e.pointerId))PTR.
  else if(cam.drag&&e.pointerId===cam.drag.id){const sn=RIF.aimK>.5?.55:1;cam.yaw-=(e.clientX-cam.drag.x)*.006*sn;cam.pitch=clamp(cam.pitch+(e.clientY-cam.drag.y)*.004*sn,RIF.aimK>.3?-.6:Math.min(-.15,cam.pitch),1.15);cam.drag.x=e.clientX;cam.drag.y=e.clientY;cam.dragT=2.5;}});
 const pend=e=>{rifleMouse(e);PTR.delete(e.pointerId);pinch0=0;if(e.pointerId===joy.id){joy.id=null;joy.x=joy.y=0;$('joybase').style.display='none';}if(cam.drag&&e.pointerId===cam.drag.id)cam.drag=null;};
 cv.addEventListener('pointerup',pend);cv.addEventListener('contextmenu',e=>e.preventDefault());
-function rifleMouse(e){if(e.pointerType!=='mouse')return;const L=!!(e.buttons&1),Rb=!!(e.buttons&2);if(L&&!RIF.btnL&&RIF.aim)rifleFire();RIF.btnL=L;RIF.btnR=Rb;}cv.addEventListener('pointercancel',pend);
+function rifleMouse(e){if(e.pointerType!=='mouse')return;const L=!!(e.buttons&1),Rb=!!(e.buttons&2);if(L&&!RIF.btnL&&RIF.drawn&&state==='play'){if(!document.pointerLockElement)try{cv.requestPointerLock();}catch(_){}rifleFire();}RIF.btnL=L;RIF.btnR=Rb;}
+document.addEventListener('mousemove',e=>{if(document.pointerLockElement!==cv||state!=='play'||player.car)return;const sn=RIF.zoomK>.5?.5:.85;cam.yaw-=e.movementX*.0032*sn;cam.pitch=clamp(cam.pitch+e.movementY*.0028*sn,-.6,1.15);cam.dragT=2.5;});cv.addEventListener('pointercancel',pend);
 cv.addEventListener('wheel',e=>{if(state==='view'){vcam.r=clamp(vcam.r*(1+e.deltaY*.0012),15,170);vcam.idle=0;e.preventDefault();}},{passive:false});
 const btn=(id,down,up)=>{const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();b.classList.add('down');down&&down();});const u=()=>{b.classList.remove('down');up&&up();};b.addEventListener('pointerup',u);b.addEventListener('pointercancel',u);b.addEventListener('pointerleave',u);};
 btn('bEnter',()=>{enterQ=true;});
@@ -5307,7 +5308,7 @@ function readInput(){const k=keys;let mx=(k.d||k.arrowright?1:0)-(k.a||k.arrowle
    Ten-round magazine; the bolt is worked by hand after every shot and loaded from two five-round chargers on reload.
    The mocap keeps running underneath: the spine leans with the aim and both arms are laid onto the rifle with two-bone IK each frame.
    Shooting in Westminster has consequences: people scatter, and hitting anyone (worse still a police officer) brings the Met. */
-const RIF={ready:false,root:null,bolt:null,knob:null,drawn:false,aim:false,aimK:0,aimHold:0,mag:10,cyc:0,rel:0,kick:0,btnL:false,btnR:false,touchAim:false,
+const RIF={ready:false,root:null,bolt:null,knob:null,drawn:false,aim:false,aimK:0,aimHold:0,zoomK:0,mag:10,cyc:0,rel:0,kick:0,btnL:false,btnR:false,touchAim:false,
  aimPt:new V3(),aimOk:false,shells:[],puffs:[],tr:null,trT:0,fl:null,flT:0,shellQ:false,clk:{}};
 const RIF_CYC=.95,RIF_REL=2.7,RIF_BLADE=.55,RIF_BORE=new V3(.001,.075,.8),RIF_PIV=[.001,.071];
 const _wqa=new V3(),_wqb=new V3(),_wqc=new V3(),_wqd=new V3(),_wqe=new V3(),_wqt=new V3(),_wqq=new THREE.Quaternion(),_wqq2=new THREE.Quaternion(),_wqm=new THREE.Matrix4(),_wqs=new V3(),_wqx=new V3(),_wqy=new V3(),_wqz=new V3();
@@ -5385,7 +5386,7 @@ function rifleFire(){if(!RIF.ready||!RIF.drawn||state!=='play')return;if(RIF.cyc
 function rifleReload(){if(state!=='play'||!RIF.drawn||RIF.rel>0||RIF.mag>=10||RIF.cyc>.25)return;RIF.rel=RIF_REL;RIF.cyc=0;RIF.clk={};rifleHUD();}
 function rifleToggle(){if(!RIF.ready||state!=='play'||player.car)return;
  if(!RIF.drawn&&(player.inside||player.ug)){flash('Not in here','Keep the rifle slung indoors','#ffcf3f');return;}
- RIF.drawn=!RIF.drawn;if(!RIF.drawn){RIF.aim=false;RIF.rel=0;RIF.touchAim=false;const ba=$('bAim');if(ba)ba.classList.remove('on');}rifleClick(900,.2);rifleHUD();}
+ RIF.drawn=!RIF.drawn;if(RIF.drawn&&!TOUCH)try{cv.requestPointerLock();}catch(_){}if(!RIF.drawn&&document.pointerLockElement)document.exitPointerLock();if(!RIF.drawn){RIF.aim=false;RIF.rel=0;RIF.touchAim=false;const ba=$('bAim');if(ba)ba.classList.remove('on');}rifleClick(900,.2);rifleHUD();}
 function rifleHUD(){const a=$('ammo');if(!a)return;document.body.classList.toggle('rifle',RIF.drawn&&!player.car);
  if(!RIF.drawn||player.car){a.style.display='none';return;}a.style.display='block';
  let s='';for(let i=0;i<10;i++)s+=i<RIF.mag?'▮':'▯';a.innerHTML='<b>LEE-ENFIELD</b> '+s+' <span>'+(RIF.rel>0?'RELOADING':RIF.mag+'/10')+'</span>';}
@@ -5416,7 +5417,10 @@ function rifleUpdate(dt){if(!RIF.ready)return;const r=RIF.root,m=player.m;rifleF
  if(!vis){if(player.car&&RIF.drawn){RIF.drawn=false;RIF.aim=false;RIF.rel=0;rifleHUD();}return;}
  if((player.inside||player.ug)&&RIF.drawn){RIF.drawn=false;RIF.aim=false;RIF.rel=0;rifleHUD();}
  const down=player.down>0,play=state==='play';
- RIF.aim=RIF.drawn&&play&&!down&&RIF.rel<=0&&(RIF.btnR||RIF.touchAim);
+ RIF.aim=RIF.drawn&&play&&!down&&RIF.rel<=0;
+ RIF.zoomK+=(((RIF.aim&&(RIF.btnR||RIF.touchAim))?1:0)-RIF.zoomK)*(1-Math.exp(-dt*10));
+ if(RIF.btnL&&RIF.aim&&RIF.cyc<=0&&RIF.mag>0&&!TOUCH)rifleFire();
+ if(!play&&document.pointerLockElement)document.exitPointerLock();
  if(RIF.aimHold>0)RIF.aimHold-=dt;const aimNow=RIF.aim||(RIF.drawn&&RIF.aimHold>0&&RIF.rel<=0&&!down);
  RIF.aimK+=((aimNow?1:0)-RIF.aimK)*(1-Math.exp(-dt*14));RIF.kick*=Math.exp(-dt*11);
  // bolt / reload clocks
@@ -5657,7 +5661,7 @@ function updateFoot(dt,inp){const pl=player,m=pl.m;
  if(pl.down>0){pl.down-=dt;m.g.rotation.x=-PI/2*Math.min(1,(2.2-pl.down)*4);m.g.position.y=.25+pl.pos.y;if(pl.down<=0){m.g.rotation.x=0;m.g.position.y=pl.pos.y;}m.g.position.x=pl.pos.x;m.g.position.z=pl.pos.z;return;}
  let mx=state==='play'?inp.mx:0,my=state==='play'?inp.my:0;const mag=Math.min(1,Math.hypot(mx,my));
  const fx=-Math.sin(cam.yaw),fz=-Math.cos(cam.yaw),rx=-fz,rz=fx;let dx=fx*my+rx*mx,dz=fz*my+rz*mx;const dl=Math.hypot(dx,dz);
- const rAim=RIF.drawn&&(RIF.aim||RIF.aimHold>0)&&state==='play';const spd=(inp.sprint&&state==='play'&&!rAim?7.4:rAim?2.1:4.3)*mag;
+ const rAim=RIF.drawn&&(RIF.aim||RIF.aimHold>0)&&state==='play';const spd=(inp.sprint&&state==='play'&&!rAim?7.4:rAim?3:4.3)*mag;
  if(dl>.05){dx/=dl;dz/=dl;pl.h=lerpA(pl.h,Math.atan2(dx,dz),1-Math.exp(-dt*12));pl.pos.x+=dx*spd*dt;pl.pos.z+=dz*spd*dt;pl.spd=spd;}else pl.spd=0;
  if(rAim)pl.h=lerpA(pl.h,cam.yaw+PI-RIF_BLADE,1-Math.exp(-dt*18));
  if(!pl.ug)for(const c of cars){const fx2=Math.sin(c.h),fz2=Math.cos(c.h);for(const o of c.circ){const cx=c.pos.x+fx2*o,cz=c.pos.z+fz2*o;const ddx=pl.pos.x-cx,ddz=pl.pos.z-cz,d=Math.hypot(ddx,ddz),r=c.cr+.35;if(d<r&&d>1e-4){if(c.speed()>6&&c.driver!==null){pl.hp-=c.speed()*2.2;pl.down=2.2;AU.bump(c.speed());if(pl.hp<=0)gameOver('wasted');}pl.pos.x=cx+ddx/d*r;pl.pos.z=cz+ddz/d*r;}}}
@@ -5773,7 +5777,7 @@ function update(dt){clockT+=dt;NPCDT=dt;skyMat.uniforms.time.value=clockT;WINDT.
   cam.dist+=(dd-cam.dist)*(dd<cam.dist?1:Math.min(1,dt*3));
   let sx=0,sy=0;if(shake>0){shake=Math.max(0,shake-dt*2.5);sx=(Math.random()-.5)*shake*.5;sy=(Math.random()-.5)*shake*.5;}
   let cy=Math.max((player.car?0:player.pos.y)+.6,ty+dy*cam.dist)+sy;if(!player.car&&player.ug)cy=Math.min(cy,player.pos.y+3.05);camera.position.set(tx+dx*cam.dist+sx,cy,tz+dz*cam.dist);camera.lookAt(tx,ty+.2,tz);intCam();
-  const fov=60-(player.car?0:16*RIF.aimK)+(player.car?Math.min(14,player.car.speed()*.3):0);if(Math.abs(fov-camera.fov)>.1){camera.fov+=(fov-camera.fov)*Math.min(1,dt*3);camera.updateProjectionMatrix();}}
+  const fov=60-(player.car?0:10*RIF.aimK+10*RIF.zoomK)+(player.car?Math.min(14,player.car.speed()*.3):0);if(Math.abs(fov-camera.fov)>.1){camera.fov+=(fov-camera.fov)*Math.min(1,dt*3);camera.updateProjectionMatrix();}}
  // environment
  const C=(state==='title'||state==='view')?new V3(42,0,-140):P;updateHands();bellClock();updateHeadSpot();placeSun(shadowCentre(C));
  sky.position.copy(camera.position);capT-=dt;if(capT<=0&&state!=='title'&&state!=='cast'){const cc=state==='view'?new V3(42,0,-140):focusPos();if(Math.hypot(cc.x-capPos.x,cc.z-capPos.z)>220){captureEnv(cc);capT=2;}}updatePools();
