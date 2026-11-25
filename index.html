@@ -154,7 +154,7 @@ body.touch #bMenu{top:calc(212px + env(safe-area-inset-top));padding:6px 14px}
  <div class="lbl">Weather</div><div class="seg"><button data-wx="dry" class="on">Dry</button><button data-wx="cloudy">Grey</button><button data-wx="drizzle">Drizzle</button><button data-wx="rain">Rain</button></div>
  <div class="lbl">Explore</div><button id="pSharp" style="display:none"></button><button id="pMap">Map of London <span style="opacity:.6">(M)</span></button><button id="pBB">Big Ben close-up <span style="opacity:.6">(B)</span></button><button id="pMP">Play with friends 👥</button><button id="pGo">Go to a place… <span style="opacity:.6">(G)</span></button>
  <div class="lbl">Graphics</div><div class="seg"><button data-q="hi">High</button><button data-q="lo">Fast</button></div>
- <div class="lbl">Controls</div><table><tr><td>Move / drive</td><td>WASD or arrows</td></tr><tr><td>Sprint</td><td>Shift</td></tr><tr><td>Get in / out · board train</td><td>E</td></tr><tr><td>Handbrake</td><td>Space</td></tr><tr><td>Horn</td><td>H</td></tr><tr><td>Rifle: draw / sling</td><td>Q</td></tr><tr><td>Aim · fire</td><td>Hold right mouse · F or left click</td></tr><tr><td>Reload</td><td>R</td></tr><tr><td>Map</td><td>M</td></tr><tr><td>Pause</td><td>Esc or P</td></tr><tr><td>Look around</td><td>Drag</td></tr></table></div></div>
+ <div class="lbl">Model credit</div><div style="font-size:12px;line-height:1.3;opacity:.8"><a style="color:inherit" href="https://sketchfab.com/3d-models/bmw-touring-british-police-traffic-car-509f7dbf94514d1f9b91b188e1084436" target="_blank" rel="noopener noreferrer">BMW Touring British Police Traffic Car</a> by David_Holiday · <a style="color:inherit" href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a> · geometry merged, construction lines removed, wheels separated and scale adjusted.</div><div class="lbl">Controls</div><table><tr><td>Move / drive</td><td>WASD or arrows</td></tr><tr><td>Sprint</td><td>Shift</td></tr><tr><td>Get in / out · board train</td><td>E</td></tr><tr><td>Handbrake</td><td>Space</td></tr><tr><td>Horn</td><td>H</td></tr><tr><td>Rifle: draw / sling</td><td>Q</td></tr><tr><td>Aim · fire</td><td>Hold right mouse · F or left click</td></tr><tr><td>Reload</td><td>R</td></tr><tr><td>Map</td><td>M</td></tr><tr><td>Pause</td><td>Esc or P</td></tr><tr><td>Look around</td><td>Drag</td></tr></table></div></div>
 <div id="bigmap" class="ovl" role="dialog" aria-label="Map"><div class="mwrap"><canvas id="bmc"></canvas><div class="mt">Westminster <span id="bmSub">You are the red arrow · drag to pan</span></div><button id="bmClose">Close</button></div></div>
 <div id="mp" class="ovl" role="dialog" aria-label="Play with friends"><div class="pbox"><h2>Play with friends</h2>
 <div class="lbl">Your name</div><input id="mpName" maxlength="16" placeholder="Your name" autocomplete="nickname">
@@ -5033,6 +5033,24 @@ function vehLoadLv(L,key,lv,cb){L.load('veh_'+key+'_'+lv+'.glb',g=>{freeOnUpload
    for(const n of g.scene.children){const nm=n.name.replace(/_/g,' ').trim();if(nm==='body')S.body=n;else if(/^W /.test(nm))S.W[nm.slice(2)]=n;else if(/^C /.test(nm))S.C[nm.slice(2)]=n;}
    cb(S);},undefined,e=>{console.warn('veh',key,e);cb(null);});}
 function vehCat(m){const n=(m&&m.name)||'';return n.indexOf('cat:')===0?n.slice(4):null;}
+// Detailed BMW police model: loaded once, with procedural fallback on failure or at distance.
+let POLBMW=null,POLBMWloading=false;
+function policeBMWLoad(){if(POLBMWloading||POLBMW||!THREE.GLTFLoader)return;POLBMWloading=true;
+ const L=mkGLTF();L.load('police_bmw.glb',g=>{const body=g.scene.children.find(n=>n.name==='body'),W={};
+ for(const n of g.scene.children){const name=n.name.replace(/_/g,' ');if(/^W /.test(name))W[name.slice(2)]=n;}
+ if(!body||Object.keys(W).length!==4){console.warn('Police BMW asset missing body or wheels');return;}
+ POLBMW={body,W};},undefined,e=>console.warn('Detailed police BMW unavailable; retaining default police cars',e));}
+function policeBMWAttach(c){if(c._polBMW||!POLBMW)return;const group=new THREE.Group();group.position.y=-.7;c.body.add(group);const body=POLBMW.body.clone();group.add(body);
+ const orig=c.body.children[0],wheels=[];for(const key of ['FL','FR','RL','RR']){const src=POLBMW.W[key],hub=new THREE.Group(),spin=new THREE.Group(),wheel=src.clone();hub.position.copy(src.position);wheel.position.set(0,0,0);spin.add(wheel);hub.add(spin);c.g.add(hub);
+ const match=c.wheels.find(w=>w.front===(key[0]==='F')&&Math.sign(w.hub.position.x)===Math.sign(hub.position.x));wheels.push({hub,spin,match});hub.visible=false;}
+ const lights=[];for(const sx of [-1,1])for(const z of [-.36,-.72]){const l=new THREE.Mesh(GEO.box,blueOff);l.scale.set(.35,.065,.025);l.position.set(sx*.28,1.58,z);group.add(l);lights.push({l,side:sx});}
+ for(const sx of [-1,1]){const l=new THREE.Mesh(GEO.box,blueOff);l.scale.set(.12,.035,.025);l.position.set(sx*.28,.65,2.36);group.add(l);lights.push({l,side:sx});}
+ body.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});group.visible=false;c._polBMW={group,orig,wheels,lights};}
+function policeBMWUpdate(){const list=cars.filter(c=>c.police);if(!list.length)return;policeBMWLoad();if(!POLBMW)return;
+ const near=list.map(c=>({c,d:Math.hypot(c.pos.x-camera.position.x,c.pos.z-camera.position.z)})).sort((a,b)=>a.d-b.d).filter(q=>q.d<(LOWQ?18:32)).slice(0,LOWQ?1:2).map(q=>q.c);
+ for(const c of list){const on=near.includes(c);if(on&&!c._polBMW)policeBMWAttach(c);const m=c._polBMW;if(!m)continue;m.group.visible=on;m.orig.visible=!on;for(const w of c.wheels)w.hub.visible=!on;
+ for(const w of m.wheels){w.hub.visible=on;if(on&&w.match){w.hub.rotation.y=w.match.hub.rotation.y;w.spin.rotation.x=w.match.spin.rotation.x;}}
+ if(on){const phase=Math.floor(clockT*5)%2===0;for(const q of m.lights)q.l.material=c.chase&&((q.side<0)===phase)?blueOn:blueOff;}}}
 function vehUpgrade(c,key,T){if(c.vk)return;c.vk=key;const cfg=VEHM[key]||{},M=vehMats(),inner=c.body.children[0];
  let paint=null;for(const k of inner.children)if(k.isMesh&&k.visible!==false){paint=k.material;break;}
  for(const k of inner.children)if(k!==c.drv)k.visible=false;
@@ -5767,7 +5785,7 @@ function update(dt){clockT+=dt;NPCDT=dt;skyMat.uniforms.time.value=clockT;WINDT.
  if(!player.car)updateFoot(dt,inp);
  try{rifleUpdate(dt);}catch(e){console.warn('rifle',e);}
  const F=focusPos();
- for(const c of cars){const d=Math.hypot(c.pos.x-F.x,c.pos.z-F.z);c.g.visible=d<330;c.setDetail(d<90);
+ policeBMWUpdate();for(const c of cars){const d=Math.hypot(c.pos.x-F.x,c.pos.z-F.z);c.g.visible=d<330;c.setDetail(d<90);
   if(c.driver==='player'){c.inp.thr=state==='play'?inp.my:0;c.inp.steer=state==='play'?inp.mx:0;c.inp.hb=state==='play'&&inp.hb&&!(TOUCH&&false);}
   else if(c.chase)policeDrive(c,dt);else if(c.driver==='ai'&&c.ai){if(d>360)continue;aiDrive(c,dt);}else{c.inp.thr=0;c.inp.steer=0;c.inp.hb=true;}
   if(d<380)c.physics(dt);
