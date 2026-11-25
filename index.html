@@ -5036,21 +5036,26 @@ function vehCat(m){const n=(m&&m.name)||'';return n.indexOf('cat:')===0?n.slice(
 // Detailed BMW police model: loaded once, with procedural fallback on failure or at distance.
 let POLBMW=null,POLBMWloading=false;
 function policeBMWLoad(){if(POLBMWloading||POLBMW||!THREE.GLTFLoader)return;POLBMWloading=true;
- const L=mkGLTF();L.load('police_bmw.glb',g=>{const body=g.scene.children.find(n=>n.name==='body'),W={};
+ const L=mkGLTF();L.load('police_bmw.glb?v=2',g=>{const body=g.scene.children.find(n=>n.name==='body'),W={};
  for(const n of g.scene.children){const name=n.name.replace(/_/g,' ');if(/^W /.test(name))W[name.slice(2)]=n;}
  if(!body||!['FL','FR','RL','RR'].every(key=>W[key])){console.warn('Police BMW asset missing body or wheels');return;}
- freeOnUpload(g.scene);POLBMW={body,W};},undefined,e=>console.warn('Detailed police BMW unavailable; retaining default police cars',e));}
+ const reflective={'White':.65,'Color_007':.9,'Translucent_Glass_Gray_3':.85,'0131_Silver':.8};
+ const materials=new Set();
+ g.scene.traverse(o=>{if(o.isMesh)materials.add(o.material);});
+ for(const m of materials){if(Object.hasOwn(reflective,m.name))addRefl(m,reflective[m.name]);}
+ carShade(g.scene);freeOnUpload(g.scene);POLBMW={body,W};},undefined,e=>console.warn('Detailed police BMW unavailable; retaining default police cars',e));}
 function policeBMWAttach(c){if(c._polBMW||!POLBMW)return;const group=new THREE.Group();group.position.y=-.7;c.body.add(group);const body=POLBMW.body.clone();group.add(body);
  const orig=c.body.children[0],wheels=[];for(const key of ['FL','FR','RL','RR']){const src=POLBMW.W[key],hub=new THREE.Group(),spin=new THREE.Group(),wheel=src.clone();hub.position.copy(src.position);wheel.position.set(0,0,0);spin.add(wheel);hub.add(spin);c.g.add(hub);
  const match=c.wheels.find(w=>w.front===(key[0]==='F')&&Math.sign(w.hub.position.x)===Math.sign(hub.position.x));wheels.push({hub,spin,match});hub.visible=false;}
- const lights=[];for(const sx of [-1,1])for(const z of [-.36,-.72]){const l=new THREE.Mesh(GEO.box,blueOff);l.scale.set(.35,.065,.025);l.position.set(sx*.30,1.58,z);group.add(l);lights.push({l,side:sx});}
- for(const sx of [-1,1]){const l=new THREE.Mesh(GEO.box,blueOff);l.scale.set(.12,.035,.025);l.position.set(sx*.28,.64,2.43);group.add(l);lights.push({l,side:sx});}
+ const lights=[];for(const sx of [-1,1])for(const z of [-.36,-.72]){const l=new THREE.Mesh(GEO.box,blueOn);l.scale.set(.35,.065,.025);l.position.set(sx*.30,1.58,z);group.add(l);lights.push({l,side:sx});}
+ for(const sx of [-1,1]){const l=new THREE.Mesh(GEO.box,blueOn);l.scale.set(.12,.035,.025);l.position.set(sx*.28,.64,2.43);group.add(l);lights.push({l,side:sx});}
  body.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});group.visible=false;c._polBMW={group,orig,wheels,lights};}
 function policeBMWUpdate(){const list=cars.filter(c=>c.police);if(!list.length)return;policeBMWLoad();if(!POLBMW)return;
- const near=list.map(c=>({c,d:Math.hypot(c.pos.x-camera.position.x,c.pos.z-camera.position.z)})).sort((a,b)=>a.d-b.d).filter(q=>q.d<(LOWQ?18:32)).slice(0,LOWQ?1:2).map(q=>q.c);
- for(const c of list){const on=near.includes(c);if(on&&!c._polBMW)policeBMWAttach(c);const m=c._polBMW;if(!m)continue;m.group.visible=on;m.orig.visible=!on;for(const w of c.wheels)w.hub.visible=!on;
+ const range=LOWQ?45:65;
+ for(const c of list){const distance=Math.hypot(c.pos.x-camera.position.x,c.pos.z-camera.position.z);
+ const on=distance<range+(c._polBMW?.group.visible?10:0);if(on&&!c._polBMW)policeBMWAttach(c);const m=c._polBMW;if(!m)continue;m.group.visible=on;m.orig.visible=!on;for(const w of c.wheels)w.hub.visible=!on;
  for(const w of m.wheels){w.hub.visible=on;if(on&&w.match){w.hub.rotation.y=w.match.hub.rotation.y;w.spin.rotation.x=w.match.spin.rotation.x;}}
- if(on){const phase=Math.floor(clockT*5)%2===0;for(const q of m.lights)q.l.material=c.chase&&((q.side<0)===phase)?blueOn:blueOff;}}}
+ if(on){const phase=Math.floor(clockT*5)%2===0;for(const q of m.lights)q.l.visible=c.chase&&((q.side<0)===phase);}}}
 function vehUpgrade(c,key,T){if(c.vk)return;c.vk=key;const cfg=VEHM[key]||{},M=vehMats(),inner=c.body.children[0];
  let paint=null;for(const k of inner.children)if(k.isMesh&&k.visible!==false){paint=k.material;break;}
  for(const k of inner.children)if(k!==c.drv)k.visible=false;
