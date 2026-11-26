@@ -2241,10 +2241,10 @@ function victoriaNorth(){districtMats();district2Mats();
  roadStrip(-560,-138,-258,-128);roadStrip(-394,-128,-382,-100);roadStrip(-300,-160,-291,-138);roadStrip(-448,-128,-440,-100);
  // ---- north of Tothill Street / Petty France ----
  {// Wellington Barracks behind its gravel parade ground (Philip Hardwick, 1833): long stuccoed range with a pedimented centre
-  plane(MG('gravel'),-560,-160,-484,-152,.03,4);const F=faceOf(-560,-152,-484,-138,'N');box(MG('paAshlar'),-560,0,-152,-484,13,-138,2,1,MG('slate'));
+  plane(MG('gravel'),-560,-180,-484,-152,.03,4);const F=faceOf(-560,-152,-484,-138,'N');box(MG('paAshlar'),-560,0,-152,-484,13,-138,2,1,MG('slate'));
   classical(F,{cornice:12.1,floors:[['clK',2.4],['cl',7.2]],bal:0});classical(F,{porticoOnly:1,cornice:12.1,floors:[],portico:{u0:31,u1:45,cols:6,y0:1,y1:11.6,proj:1.8,r:.5,cap:'ionic',ped:1}});
-  railing(-560,-160.2,-484,-160.2,1.6,true,.14);for(const x of [-540,-504])fixedPedLater.push(['guard',x,-154,PI]);addCol(-560,-152,-484,-138,14);
-  LANDMARKS.push({x:-522,z:-162,r:6,text:'Wellington Barracks — Philip Hardwick, 1833; home of the Foot Guards who mount the King\'s Guard at Buckingham Palace'});}
+  for(const x of [-557,-493]){box(MG('paAshlar'),x,0,-177,x+6,4.6,-170,2,1,MG('slate'));doorcase(faceOf(x,-177,x+6,-170,'N'),3,{w:1.2,h:2.6,ped:1});addCol(x,-177,x+6,-170,5);}for(const [a,b] of [[-560,-549],[-542,-502],[-495,-484]])railing(a,-180,b,-180,1.6,true,.16);for(const x of [-540,-504])fixedPedLater.push(['guard',x,-174,PI]);addCol(-560,-152,-484,-138,14);
+  LANDMARKS.push({x:-522,z:-182,r:6,text:'Wellington Barracks — Philip Hardwick, 1833; home of the Foot Guards who mount the King\'s Guard at Buckingham Palace'});}
  // 102 Petty France (Ministry of Justice): 14-storey board-marked concrete slab
  {const C=MG('conc');box(C,-478,0,-160,-412,8,-138,4,4,C);box(C,-470,8,-157,-420,49,-141,4,4,C);
   const F1=faceOf(-470,-157,-420,-141,'S'),F2=faceOf(-470,-157,-420,-141,'N');for(const F of [F1,F2]){for(let y=9.4;y<48;y+=3.3){fBox(C,F,0,F.len,y-.35,y,0,.5,2,2,C);winRow(F,'mod',.8,F.len-.8,1.65,y+1.4);}}
@@ -2564,8 +2564,11 @@ function tudorTurret(x,z,y0,h,r){const B=MG('brkT'),S=MG('stone');addGeo(B,scale
  for(let i=0;i<8;i++){const a=(i+.5)/8*PI*2;addGeo(B,new THREE.BoxGeometry(.6,.9,.35).rotateY(-a),x+Math.cos(a)*(r-.05),y0+h+.6,z+Math.sin(a)*(r-.05));}addGeo(MG('leadR'),new THREE.ConeGeometry(r*.8,r*1.2,8),x,y0+h+1.2+r*.3,z);}
 function crenel(m,x0,z0,x1,z1,y){for(const [a,b,c,d] of [[x0,z0,x1,z0],[x0,z1,x1,z1],[x0,z0,x0,z1],[x1,z0,x1,z1]]){const L=Math.hypot(c-a,d-b),n=Math.floor(L/1.2);for(let i=0;i<n;i+=2){const t0=i/n,t1=(i+1)/n;box(m,Math.min(a+(c-a)*t0,a+(c-a)*t1)-.18,y,Math.min(b+(d-b)*t0,b+(d-b)*t1)-.18,Math.max(a+(c-a)*t0,a+(c-a)*t1)+.18,y+.9,Math.max(b+(d-b)*t0,b+(d-b)*t1)+.18,1,1,m);}}}
 function stJamesPalace(x0,z0,x1,z1){const B=MG('brkT'),S=MG('stone'),H=11;
- box(B,x0,0,z0,x1,H,z1,1.6,1.6,MG('leadR'));crenel(B,x0,z0,x1,z1,H);box(S,x0-.1,H-.4,z0-.1,x1+.1,H,z1+.1,1,1,S);
- for(const sd of ['N','E','W','S']){const F=faceOf(x0,z0,x1,z1,sd);winRow(F,'palS',1.5,F.len-1.5,4,3,null);winRow(F,'palS',1.5,F.len-1.5,4,7.4,null);}
+ const m0=(x0+x1)/2;
+ const ranges=[[x0,z0,x1,z0+10],[x0,z0+10,x0+10,z1-11],[x1-10,z0+10,x1,z1-11],[x0,z1-11,x1,z1],[m0-5,z0+10,m0+5,z1-11]];
+ for(const [a,b,c,d] of ranges){box(B,a,0,b,c,H,d,1.6,1.6,MG('leadR'));crenel(B,a,b,c,d,H);box(S,a-.1,H-.4,b-.1,c+.1,H,d+.1,1,1,S);
+ for(const sd of ['N','E','W','S']){const F=faceOf(a,b,c,d,sd);winRow(F,'palS',1.5,F.len-1.5,4,3,null);winRow(F,'palS',1.5,F.len-1.5,4,7.4,null);}addCol(a,b,c,d,H+1);}
+ plane(MG('gravel'),x0+10,z0+10,m0-5,z1-11,.025,4);plane(MG('gravel'),m0+5,z0+10,x1-10,z1-11,.025,4);
  // the gatehouse: two tall octagonal turrets flanking a Tudor arch, the clock in the gable between
  const F=faceOf(x0,z0,x1,z1,'N'),m=F.len/2;const a=FP(F,m-6,0),b=FP(F,m+6,3);box(B,Math.min(a[0],b[0]),0,Math.min(a[1],b[1]),Math.max(a[0],b[0]),16,Math.max(a[1],b[1]),1.6,1.6,MG('leadR'));
  const G=Object.assign({},F,{ax:F.ax+F.nx*3,az:F.az+F.nz*3});archway(G,m,3.6,5.2);
@@ -2574,7 +2577,7 @@ function stJamesPalace(x0,z0,x1,z1){const B=MG('brkT'),S=MG('stone'),H=11;
  const cf=FP(F,m,3.05);clockFace(cf[0],12.6,cf[1],F.ry,2.4);for(const y of [8.4])addWin('palS',FP(F,m,3.05)[0],y,FP(F,m,3.05)[1],F.ry,1.2);
  // sentry boxes either side of the gate
  for(const s of [-1,1]){const c=FP(F,m+s*3.2,4.4);box(MG('vp_navy'),c[0]-.55,0,c[1]-.55,c[0]+.55,2.6,c[1]+.55,1,1,MG('vp_navy'));fixedPedLater.push(['guard',c[0]+F.nx*.2,c[1]+F.nz*.2,F.ry]);}
- addCol(x0,z0,x1,z1,H+1);addCol(Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[0],b[0]),Math.max(a[1],b[1]),16);
+ addCol(Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[0],b[0]),Math.max(a[1],b[1]),16);
  LANDMARKS.push({x:FP(F,m,6)[0],z:FP(F,m,6)[1],r:6,text:"St James's Palace — built for Henry VIII, 1531–36; the Tudor gatehouse at the foot of St James's Street. Still the senior royal palace: ambassadors are accredited to the Court of St James's."});}
 function stuccoHouse(x0,z0,x1,z1,h,sides,o){stjMats();const W=MG('stucco');box(W,x0,0,z0,x1,h,z1,2,1,MG('slate'));
  for(const sd of sides){const F=faceOf(x0,z0,x1,z1,sd);fBox(W,F,0,F.len,h-1,h-.4,0,.5);fBox(W,F,0,F.len,3.6,3.9,0,.25);fBox(W,F,0,F.len,0,.8,0,.15);
@@ -2587,13 +2590,15 @@ function lancasterHouse(x0,z0,x1,z1){stjMats();const B=MG('paAshlar'),H=21;box(B
  const F=faceOf(x0,z0,x1,z1,'S'),m=F.len/2;for(let i=0;i<6;i++){const c=FP(F,m-7.5+i*3,3.4);column(B,c[0],c[1],4.4,14.6,.55,'cor');}
  {const a=FP(F,m-9,0),b=FP(F,m+9,4.6);box(B,Math.min(a[0],b[0]),0,Math.min(a[1],b[1]),Math.max(a[0],b[0]),4.4,Math.max(a[1],b[1]),2,1,B);box(B,Math.min(a[0],b[0]),19,Math.min(a[1],b[1]),Math.max(a[0],b[0]),20.4,Math.max(a[1],b[1]),2,1,B);}
  addCol(x0,z0,x1,z1+5,H);LANDMARKS.push({x:(x0+x1)/2,z:z1+7,r:6,text:'Lancaster House — Benjamin Dean Wyatt, 1825–40, in Bath stone; the government\'s grandest venue for summits and banquets'});}
-function carltonTerrace(x0,x1,z0,z1){stjMats();const W=MG('stucco'),H=21;box(W,x0,0,z0,x1,H,z1,2,1,MG('slate'));
- const F=faceOf(x0,z0,x1,z1,'S');// raised on a Doric colonnade over the Mall, giant Corinthian order above
- for(let u=2;u<F.len-1;u+=3.6){const c=FP(F,u,1.6);column(W,c[0],c[1],0,6,.42,'doric');}fBox(W,F,0,F.len,6,7,0,2.2);
- for(let u=4;u<F.len-2;u+=4.6){const c=FP(F,u,.7);column(W,c[0],c[1],7,11,.42,'cor');}
- winRow(F,'clK',1,F.len-1,2.3,9.4);winRow(F,'cl',1,F.len-1,2.3,14.4);fBox(W,F,0,F.len,18,19.2,0,.9);winRow(F,'geoS',1,F.len-1,2.3,20.2);
- for(let u=.5;u<F.len;u+=.42){const c=FP(F,u,2.1);addGeo(W,new THREE.CylinderGeometry(.09,.12,.75,6),c[0],7.4,c[1]);}
- addCol(x0,z0,x1,z1+2.2,H);}
+function carltonTerrace(x0,x1,z0,z1){
+ stjMats();const W=MG('stucco'),H=22.5;box(W,x0,0,z0,x1,H,z1,2,1,MG('leadR'));
+ const F=faceOf(x0,z0,x1,z1,'S'),n=31,b=F.len/n;
+ for(const [a,c] of [[0,5*b],[13*b,18*b],[26*b,F.len]]){fBox(W,F,a,c,6,H,0,.9,2,1,W);const w=c-a,sh=new THREE.Shape();sh.moveTo(-w/2,0);sh.lineTo(w/2,0);sh.lineTo(0,w*.18);sh.closePath();const geo=new THREE.ExtrudeGeometry(sh,{depth:.8,bevelEnabled:false});geo.rotateY(F.ry);const p=FP(F,(a+c)/2,.6);geo.translate(p[0],22.4,p[1]);W.geo(geo);}
+ for(let i=0;i<n;i++){const u=(i+.5)*b,proj=(i<5||i>=26||i>=13&&i<18)?.93:.04,p=FP(F,u,proj);addWin('clP',p[0],10.2,p[1],F.ry,.76);addWin('cl',p[0],14.9,p[1],F.ry,.76);addWin('geoS',p[0],20.6,p[1],F.ry,.66);const c=FP(F,u,1.55);column(W,c[0],c[1],0,5.5,.27,'doric');if(i%2===0){const d=FP(F,i*b+.12,proj+.5);column(W,d[0],d[1],6.4,11.6,.3,'cor');}}
+ for(const [y,h,o] of [[5.5,.9,2],[17.9,.65,1.25],[18.6,.4,1.1],[21.6,.85,1]])fBox(W,F,0,F.len,y,y+h,0,o,2,1,W);balustrade(F,0,F.len,6.4,BALU);
+ const back=faceOf(x0,z0,x1,z1,'N');for(let i=0;i<n;i++){const p=FP(back,(i+.5)*b,.05);for(const y of [4,9,14,19])addWin('geo',p[0],y,p[1],back.ry,.78);}
+ addCol(x0,z0,x1,z1+2,H+2);LANDMARKS.push({x:(x0+x1)/2,z:z1+4,r:6,text:'Carlton House Terrace — John Nash, 1827–32'});
+}
 function dukeOfYork(x,z){const G=MG('granite'),P=MG('paAshlar');box(G,x-4,0,z-4,x+4,5.5,z+4,1,1,G);box(G,x-4.4,5.5,z-4.4,x+4.4,6.2,z+4.4,1,1,G);
  addGeo(G,new THREE.CylinderGeometry(1.7,1.9,31,24),x,6.2+15.5,z);box(G,x-2.4,37.2,z-2.4,x+2.4,38,z+2.4,1,1,G);addGeo(MG('ironB'),new THREE.CylinderGeometry(2.1,2.1,1.1,16,1,true),x,38.6,z);
  addGeo(G,new THREE.CylinderGeometry(1.3,1.5,2.6,16),x,39.3,z);STONEFIG.push([x,40.6,z,0,2.4,2]);addCol(x-4,z-4,x+4,z+4,40);
@@ -2667,15 +2672,15 @@ function pallMallClub(x0,z0,x1,z1,kind){
 function stJamesDistrict(){districtMats();stjMats();
  // Marlborough Road and Pall Mall (inner streets); St James's Street up to Piccadilly
  roadStrip(-430,-722,-300,-710);roadStrip(-362,-788,-350,-722);roadStrip(-300,-722,-185,-710);
- lancasterHouse(-430,-640,-392,-596);stuccoHouse(-386,-634,-352,-594,16,['S','E','W'],{portico:'S'});
- LANDMARKS.push({x:-369,z:-591,r:5,text:'Clarence House — John Nash, 1825–27; the London home of King Charles III'});
+ lancasterHouse(-430,-640,-397,-596);stuccoHouse(-432,-698,-392,-652,15,['S','W','N'],{portico:'S'});
+ LANDMARKS.push({x:-412,z:-649,r:5,text:'Clarence House — John Nash, 1825–27; the London home of King Charles III'});
  stJamesPalace(-392,-706,-318,-646);plane(MG('gravel'),-346,-646,-318,-600,.03,4);
  // Pall Mall north side: the clubs
  palazzoClub(-430,-788,-400,-722,18,'S',{name:'Pall Mall — the street of gentlemen\'s clubs'});palazzoClub(-400,-788,-362,-722,20,'S',{stucco:1});
  palazzoClub(-350,-788,-326,-722,19,'S',{});palazzoClub(-326,-788,-300,-722,21,'S',{stucco:1});
  palazzoClub(-300,-788,-262,-722,21,'S',{});palazzoClub(-262,-788,-232,-722,19,'S',{});palazzoClub(-232,-788,-185,-722,21,'S',{stucco:1});
  // Waterloo Place / Duke of York Steps / Carlton House Terrace
- carltonTerrace(-300,-250,-606,-578);carltonTerrace(-230,-185,-606,-578);
+ carltonTerrace(-346,-250,-610,-578);carltonTerrace(-230,-134,-610,-578);
  for(let i=0;i<10;i++)box(MG('granite'),-250,0,-578-i*1.4-1.4,-230,i*.6+.6,-578-i*1.4,1,1,MG('granite'));
  dukeOfYork(-240,-608);plane(MG('granite'),-262,-710,-218,-612,.03,3);
  // The three listed clubs belong south of Pall Mall, west of Waterloo Place. Plot widths are compressed to fit the existing map.
@@ -2684,7 +2689,7 @@ function stJamesDistrict(){districtMats();stjMats();
  for(const [x,z] of [[-240,-640],[-240,-690]]){box(MG('granite'),x-1.6,0,z-1.6,x+1.6,3.4,z+1.6,1,1,MG('granite'));const om=statue({h:1.8,top:{type:'coat',col:0x4a3b2a}},x,z,0,3.4,1.5);BRONZE.push({om,x,z,ry:0,h:3.4,id:'WP'+z,fem:false});addCol(x-1.6,z-1.6,x+1.6,z+1.6,6);}
  for(let z=-700;z<-615;z+=14){LAMPS.push([-260,z]);LAMPS.push([-220,z]);}
  // remaining blocks between St James's Street and the Green Park edge
- cBlock(-430,-706,-398,-646,16,['E','N'],{wall:'brkR',rustH:1,floors:[['geoT',2.2],['geo',6.2],['geoS',10.2]],bal:0},3.5);}
+ /* Removed filler overlapping Clarence House. */}
 
 /* ================= COUNTY HALL AND LAMBETH PALACE =================
    County Hall (Ralph Knott, 1911–22), seat of the London County Council: Edwardian Baroque in Portland stone over a granite
@@ -4643,7 +4648,7 @@ function buildWorld(){
  // outer ring (no colliders)
  const ring={hmin:18,hmax:40,col:false};
  MGP='tsq';trafalgarSquare();MGP='';MGP='stj';stJamesDistrict();MGP='parkEdge';parkPerimeter();MGP='';MGP='emb';embankment();MGP='';MGP='ccx';charingCross();MGP='';mallFlags();MGP='vic';victoriaStation();MGP='';fillBlock(264,-760,760,-580,ring);fillBlock(-760,430,-120,700,ring);fillBlock(-20,430,56,700,ring);MGP='mbk';millbankSkyline();MGP='';fillBlock(264,430,760,700,ring);fillBlock(-760,-470,-580,426,Object.assign({},ring,{ex:[[-765,-190,-575,-50]]}));fillBlock(620,-576,760,426,ring);
- addCol(-1000,-1000,-840,1000,60);addCol(-840,-480,-575,-190,60);addCol(-840,-50,-575,1000,60);addCol(-840,-190,-760,-50,60);addCol(615,-900,900,900,60);addCol(-1000,-1000,-200,-900,60);addCol(-180,-1000,1000,-900,60);addCol(-185,-900,-136,-575,60);addCol(-300,-900,-185,-790,60);addCol(128,-900,1000,-575,60);addCol(-136,-900,-128,-812,60);addCol(-900,425,900,900,60);
+ addCol(-1000,-1000,-840,1000,60);addCol(-840,-480,-575,-190,60);addCol(-840,-50,-575,1000,60);addCol(-840,-190,-760,-50,60);addCol(615,-900,900,900,60);addCol(-1000,-1000,-200,-900,60);addCol(-180,-1000,1000,-900,60);addCol(-185,-900,-136,-612,60);addCol(-300,-900,-185,-790,60);addCol(128,-900,1000,-575,60);addCol(-136,-900,-128,-812,60);addCol(-900,425,900,900,60);
  MGP='pic';piccadillyDistrict();MGP='';fillBlock(-700,-898,-412,-862,{hmin:18,hmax:30});fillBlock(-336,-898,-300,-862,{hmin:18,hmax:30});westEnd();venues();
  station();districts();roads();buildSignals();busStops();bins();bollards();
  {const H=[...ROADR,...HOLES];holedPlane(PV,-900,-900,58,900,0,4,H);holedPlane(PV,262,-900,900,900,0,4,H);holedPlane(PV,-205,-1140,-175,-900,0,4,H);for(const I of ISLANDS){MGP=I.id;islandBase(I);}MGP='';}
@@ -6000,7 +6005,7 @@ function netAutoJoin(){try{const j=new URLSearchParams(location.search).get('joi
 function updateStreet(dt){streetT-=dt;if(streetT>0)return;streetT=.35;const P=focusPos();let h='';
  if(player.inside)h=player.inside.name.toUpperCase();else if(player.ug)h=(zoneName(P.x,P.z)||'').toUpperCase();else{const n=streetAt(P.x,P.z);h=n?streetHTML(n):(zoneName(P.x,P.z)||'').toUpperCase();}
  if(h!==streetCur){streetCur=h;$('street').innerHTML=h;}}
-function zoneName(x,z){if(player.inside)return player.inside.name;{const rz=!player.ug&&railZone(x,z);if(rz)return rz;}if(player.ug&&player.pos.y<-6){const k=kitNear();if(k)return k.name+' — '+k.lines[0]+' line';}if(x>-570&&x<-102&&Math.abs(z+190)<8)return 'Birdcage Walk';if(Math.abs(x+155)<8&&z>-560&&z<-190)return 'Horse Guards Road';if(x>-145&&x<-78&&z>-545&&z<-400)return 'Horse Guards Parade';if(x>-112&&x<-92&&z<-160&&z>-190)return 'Horse Guards Road';if(x>-92&&x<-43&&z>-316&&z<-306)return 'King Charles Street';if(x<-575&&x>-765&&z>-190&&z<-50)return z<-130?'Grosvenor Hotel':'Victoria Station';if(x>-412&&x<-300&&z>-900&&z<-780){if(z>-800&&z<-790)return 'Jermyn Street';if(z<-862)return x<-400?'Burlington Arcade':'Royal Academy';if(z>-862&&z<-838)return 'Piccadilly';if(x<-352)return 'Fortnum & Mason';if(x<-340)return 'Hatchards';return "St James's Church";}if(x>-430&&x<-185&&z>-790&&z<-576){if(z>-722&&z<-710)return 'Pall Mall';if(x>-362&&x<-350&&z<-722)return "St James's Street";if(x>-392&&x<-318&&z>-706&&z<-646)return "St James's Palace";if(x<-392&&z>-640)return 'Lancaster House';if(x>-386&&x<-352&&z>-634)return 'Clarence House';if(x>-300&&z>-612)return 'Carlton House Terrace';if(x>-262&&x<-218)return 'Waterloo Place';return "St James's";}if(x>-136&&x<128&&z>-812&&z<-575){if(z<-772&&x>-105&&x<45)return 'National Gallery';if(x>68&&z<-763)return 'St Martin-in-the-Fields';if(x>-125&&x<-97&&z>-615&&z<-590)return 'Admiralty Arch';if(z>-665)return 'Charing Cross';return 'Trafalgar Square';}if(x>-205&&x<-175&&z<-805&&z>-1140)return 'Charing Cross Road';if(x<-3000)return z<-570?(x<-4280&&z<-620?'Kensington Palace':'Kensington Gardens'):Math.abs(z-520)<16?'Cromwell Road':'Gloucester Road';if(x>2700&&z<-1860)return x>3135?'Bishopsgate':z>-2000?'Liverpool Street':'Liverpool Street Station';if(z<-1100&&x<-100){if(z>-1340&&z<-1310&&x<-262)return 'Chinatown';if(x>-200)return 'Charing Cross Road';if(z<-1420)return 'Soho';return 'Leicester Square';}if(x<-575&&x>-720&&z>-640&&z<-480)return x<-686?'Buckingham Palace':'Victoria Memorial';if(z<-842&&x<-300)return 'Piccadilly';if(x>-440&&x<-385&&z<-788&&z>-842)return 'The Ritz';if(x<-440&&x>-610&&z<-588&&z>-842)return 'Green Park';if(z>-571&&z<-549&&x<-110&&x>-612)return 'The Mall';if(x<-385&&z<-575)return 'St James\'s';if(x>-90&&x<-40&&z>-388&&z<-372)return 'Downing Street';if(x>-260&&x<-188&&z>-152&&z<-98)return 'Central Hall';if(player.ug)return 'Westminster Station';if(x>58&&x<262)return z>-175&&z<-145?'Westminster Bridge':z>316&&z<344?'Lambeth Bridge':'River Thames';
+function zoneName(x,z){if(player.inside)return player.inside.name;{const rz=!player.ug&&railZone(x,z);if(rz)return rz;}if(player.ug&&player.pos.y<-6){const k=kitNear();if(k)return k.name+' — '+k.lines[0]+' line';}if(x>-570&&x<-102&&Math.abs(z+190)<8)return 'Birdcage Walk';if(Math.abs(x+155)<8&&z>-560&&z<-190)return 'Horse Guards Road';if(x>-145&&x<-78&&z>-545&&z<-400)return 'Horse Guards Parade';if(x>-112&&x<-92&&z<-160&&z>-190)return 'Horse Guards Road';if(x>-92&&x<-43&&z>-316&&z<-306)return 'King Charles Street';if(x<-575&&x>-765&&z>-190&&z<-50)return z<-130?'Grosvenor Hotel':'Victoria Station';if(x>-412&&x<-300&&z>-900&&z<-780){if(z>-800&&z<-790)return 'Jermyn Street';if(z<-862)return x<-400?'Burlington Arcade':'Royal Academy';if(z>-862&&z<-838)return 'Piccadilly';if(x<-352)return 'Fortnum & Mason';if(x<-340)return 'Hatchards';return "St James's Church";}if(x>-430&&x<-185&&z>-790&&z<-576){if(z>-722&&z<-710)return 'Pall Mall';if(x>-362&&x<-350&&z<-722)return "St James's Street";if(x>-392&&x<-318&&z>-706&&z<-646)return "St James's Palace";if(x<-392&&z>-640)return 'Lancaster House';if(x>-432&&x<-392&&z>-698&&z<-652)return 'Clarence House';if(x>-346&&z>-612)return 'Carlton House Terrace';if(x>-262&&x<-218)return 'Waterloo Place';return "St James's";}if(x>-136&&x<128&&z>-812&&z<-575){if(z<-772&&x>-105&&x<45)return 'National Gallery';if(x>68&&z<-763)return 'St Martin-in-the-Fields';if(x>-125&&x<-97&&z>-615&&z<-590)return 'Admiralty Arch';if(z>-665)return 'Charing Cross';return 'Trafalgar Square';}if(x>-205&&x<-175&&z<-805&&z>-1140)return 'Charing Cross Road';if(x<-3000)return z<-570?(x<-4280&&z<-620?'Kensington Palace':'Kensington Gardens'):Math.abs(z-520)<16?'Cromwell Road':'Gloucester Road';if(x>2700&&z<-1860)return x>3135?'Bishopsgate':z>-2000?'Liverpool Street':'Liverpool Street Station';if(z<-1100&&x<-100){if(z>-1340&&z<-1310&&x<-262)return 'Chinatown';if(x>-200)return 'Charing Cross Road';if(z<-1420)return 'Soho';return 'Leicester Square';}if(x<-575&&x>-720&&z>-640&&z<-480)return x<-686?'Buckingham Palace':'Victoria Memorial';if(z<-842&&x<-300)return 'Piccadilly';if(x>-440&&x<-385&&z<-788&&z>-842)return 'The Ritz';if(x<-440&&x>-610&&z<-588&&z>-842)return 'Green Park';if(z>-571&&z<-549&&x<-110&&x>-612)return 'The Mall';if(x<-385&&z<-575)return 'St James\'s';if(x>-90&&x<-40&&z>-388&&z<-372)return 'Downing Street';if(x>-260&&x<-188&&z>-152&&z<-98)return 'Central Hall';if(player.ug)return 'Westminster Station';if(x>58&&x<262)return z>-175&&z<-145?'Westminster Bridge':z>316&&z<344?'Lambeth Bridge':'River Thames';
  if(x>=262)return z<-174?'South Bank':'Lambeth';if(x>-112&&x<-38&&z>-170&&z<-75)return 'Parliament Square';if(x>-19&&z>-146&&z<136)return 'Palace of Westminster';
  if(x>-220&&x<-38&&z>-75&&z<10)return 'Westminster Abbey';if(x<-112&&z<-165)return "St James's Park";if(x>-92&&x<-12&&z<-170)return 'Whitehall';if(x>=-12&&z<-170)return 'Victoria Embankment';
  if(x>-212&&x<-41&&z>40&&z<313){if(x<-130&&z<138)return 'Westminster Abbey';if(x>-64&&z<112)return 'College Green';if(x>-92&&x<-64&&z<70)return 'The Jewel Tower';if(z<152)return 'Great College Street';if(x>-181&&x<-169)return 'Tufton Street';if(x<-181)return 'Tufton Street';if(z>196&&z<207)return 'Great Peter Street';if(x>-125&&x<-114&&z<196)return 'Cowley Street';if(x>-99&&x<-88&&z<196)return 'Barton Street';if(x>-134&&x<-124&&z<219)return 'Lord North Street';if(x>-160&&x<-96&&z>216&&z<268)return 'Smith Square';if(z>233&&z<243&&x>-96)return 'Dean Stanley Street';if(x>-60&&z>243)return 'Thames House';return 'Smith Square';}
