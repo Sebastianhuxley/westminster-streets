@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Westminster Streets — geographic workbench</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font:14px system-ui,sans-serif;color:#252c2b;background:#f5f3ed}header{padding:18px 22px;background:#202c2c;color:white}h1{margin:0 0 5px;font:26px Georgia,serif}main{padding:14px;max-width:1500px;margin:auto}.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}button,label.file{border:1px solid #888;background:white;padding:8px 12px;border-radius:5px;cursor:pointer}button:disabled{opacity:.45;cursor:default}button.primary{background:#253c3b;color:white}canvas{display:block;width:100%;height: min(70vh,800px);background:#eae6dc;border:1px solid #b6b0a3;touch-action:none;cursor:grab}canvas:active{cursor:grabbing}.legend{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0}.legend i{display:inline-block;width:12px;height:12px;margin-right:5px;vertical-align:middle}.status{min-height:22px;font-size:13px}details{margin-top:10px}textarea{width:100%;height:150px}#detail{min-height:30px;overflow-wrap:anywhere}small{color:#555}a{color:inherit}
+</style>
+<header><h1>Westminster Streets / geography workbench</h1>Real-world footprint and road import · non-destructive prototype</header>
+<main>
+<div class="controls"><button class="primary" id="load">Fetch OpenStreetMap data</button><label class="file">Import Overpass JSON<input id="file" type="file" accept=".json,application/json" hidden></label><button id="export" disabled>Export game geometry</button><button id="fit">Fit map</button></div>
+<div class="controls"><label><input type="checkbox" id="buildings" checked>Buildings</label><label><input type="checkbox" id="roads" checked>Roads</label><label><input type="checkbox" id="minor">Paths / service roads</label><label><input type="checkbox" id="old" checked>Original game roads</label><label><input type="checkbox" id="labels" checked>Names</label></div>
+<div id="status" class="status" role="status">Original road graph shown. Fetch or import real data to compare.</div>
+<canvas id="map" aria-label="North-up map showing real and original game geography"></canvas>
+<div class="legend"><span><i style="background:#a8a096"></i>Buildings</span><span><i style="background:#fff;border:1px solid #aaa"></i>Real roads</span><span><i style="background:#a4bf98"></i>Parks</span><span><i style="background:#9abfce"></i>Water</span><span><i style="background:#b73550"></i>Original road graph</span><span>↑ North · drag to pan · wheel to zoom · click to inspect</span></div>
+<div id="detail">Select a building or road to inspect its OSM tags.</div>
+<small>Map data: <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a>, ODbL 1.0. The red overlay is the existing game navigation graph, approximately anchored at Elizabeth Tower, not a surveyed alignment. Unknown heights remain unknown.</small>
+<details><summary>Overpass query / manual fallback</summary><p>Copy into <a href="https://overpass-turbo.eu/" target="_blank" rel="noopener">Overpass Turbo</a>, run it and export raw JSON, then import the file above. No network requests are needed after import.</p><textarea id="query" readonly></textarea></details>
+</main>
+<script>
+'use strict';
+// One local metric frame, x east, z south, as in the Three.js game.
+// Approximate Elizabeth Tower reference and current game landmark coordinate.
+const ORIGIN={lat:51.5007,lon:-0.1246,x:36,z:-146};
+const BBOX=[51.4935,-0.1465,51.512,-0.116];
+const R=6378137, rad=Math.PI/180;
+const OLD=[{"a":[-28,-560],"b":[-28,-380],"w":22},{"a":[-28,-380],"b":[-28,-160],"w":22},{"a":[-28,-160],"b":[-28,-85],"w":20},{"a":[-28,-85],"b":[-28,330],"w":18},{"a":[-28,-160],"b":[-102,-160],"w":18},{"a":[-102,-160],"b":[-102,-85],"w":16},{"a":[-102,-85],"b":[-28,-85],"w":18},{"a":[-102,-160],"b":[-102,-560],"w":16},{"a":[-102,-85],"b":[-300,-85],"w":20},{"a":[-300,-85],"b":[-560,-85],"w":20},{"a":[-300,-85],"b":[-300,330],"w":16},{"a":[-300,330],"b":[-28,330],"w":16},{"a":[-28,-160],"b":[48,-160],"w":20},{"a":[48,-160],"b":[48,-560],"w":16},{"a":[48,-160],"b":[290,-160],"w":20},{"a":[290,-160],"b":[290,-560],"w":18},{"a":[290,-160],"b":[290,330],"w":18},{"a":[290,-160],"b":[600,-160],"w":20},{"a":[-28,330],"b":[290,330],"w":18},{"a":[-102,-560],"b":[-28,-560],"w":16},{"a":[-28,-560],"b":[48,-560],"w":16},{"a":[-102,-560],"b":[-620,-560],"w":20},{"a":[-620,-560],"b":[-620,-850],"w":16},{"a":[-620,-850],"b":[-320,-850],"w":18},{"a":[-190,-1150],"b":[-190,-1290],"w":14},{"a":[-190,-1290],"b":[-190,-1400],"w":14},{"a":[-190,-1400],"b":[-190,-1500],"w":14},{"a":[-190,-1500],"b":[-190,-1710],"w":14},{"a":[-190,-1290],"b":[-290,-1290],"w":10},{"a":[-190,-1400],"b":[-330,-1400],"w":14},{"a":[-330,-1400],"b":[-470,-1400],"w":14},{"a":[-190,-1500],"b":[-330,-1500],"w":9},{"a":[-330,-1500],"b":[-470,-1500],"w":9},{"a":[-470,-1400],"b":[-470,-1500],"w":10},{"a":[-470,-1500],"b":[-470,-1710],"w":10},{"a":[-470,-1400],"b":[-470,-1260],"w":10},{"a":[-330,-1400],"b":[-330,-1500],"w":8},{"a":[-330,-1500],"b":[-330,-1650],"w":8},{"a":[-28,-560],"b":[-28,-640],"w":22},{"a":[-102,-560],"b":[-120,-675],"w":20},{"a":[-28,-675],"b":[-120,-675],"w":20},{"a":[-28,-675],"b":[60,-675],"w":20},{"a":[-120,-675],"b":[-120,-805],"w":16},{"a":[60,-675],"b":[60,-805],"w":16},{"a":[-120,-805],"b":[60,-805],"w":14},{"a":[-120,-805],"b":[-190,-805],"w":14},{"a":[-190,-805],"b":[-190,-1150],"w":14},{"a":[-560,-85],"b":[-650,-85],"w":20}];
+function project(lat,lon){return [ORIGIN.x+(lon-ORIGIN.lon)*rad*R*Math.cos(ORIGIN.lat*rad),ORIGIN.z-(lat-ORIGIN.lat)*rad*R]}
+const query='[out:json][timeout:90];(\n'+[
+'way["highway"]','way["building"]','relation["building"]["type"="multipolygon"]',
+'way["leisure"~"^(park|garden)$"]','relation["leisure"~"^(park|garden)$"]["type"="multipolygon"]',
+'way["landuse"="grass"]','relation["landuse"="grass"]["type"="multipolygon"]',
+'way["natural"="water"]','relation["natural"="water"]["type"="multipolygon"]',
+'way["waterway"="riverbank"]','relation["waterway"="riverbank"]["type"="multipolygon"]'
+].map(q=>q+'('+BBOX.join(',')+');').join('\n')+'\n);out geom;';
+const $=id=>document.getElementById(id);$('query').value=query;
+function same(a,b){return a&&b&&a.lat===b.lat&&a.lon===b.lon}
+function close(g){return g.length>=4&&same(g[0],g[g.length-1])}
+function geometry(g){return Array.isArray(g)&&g.every(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon))?g:[]}
+function rings(members,role){
+ const pending=members.filter(m=>m.type==='way'&&(m.role===role||role==='outer'&&!m.role)).map(m=>geometry(m.geometry)).filter(g=>g.length>1).map(g=>g.slice());
+ const out=[];let incomplete=0;
+ while(pending.length){
+  let g=pending.shift();
+  while(!close(g)){
+   const j=pending.findIndex(p=>same(g[g.length-1],p[0])||same(g[g.length-1],p[p.length-1]));
+   if(j<0)break;
+   let p=pending.splice(j,1)[0];if(!same(g[g.length-1],p[0]))p.reverse();
+   g=g.concat(p.slice(1));
+  }
+  if(close(g))out.push(g.map(p=>project(p.lat,p.lon)));else incomplete++;
+ }
+ return {out,incomplete};
+}
+function kind(t){if(t.building&&t.building!=='no')return 'building';if(t.natural==='water'||t.waterway==='riverbank')return 'water';if(t.leisure==='park'||t.leisure==='garden'||t.landuse==='grass')return 'park';return null}
+function meters(s){if(s==null||!String(s).trim())return null;const m=String(s).trim().match(/^(\d+(?:\.\d+)?)\s*(?:m|metres?|meters?)?$/i);return m?Number(m[1]):null}
+function numeric(s){return s!=null&&String(s).trim()&&Number.isFinite(Number(s))?Number(s):null}
+function inside(p,ring){let v=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[i],b=ring[j];if((a[1]>p[1])!==(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])v=!v}return v}
+function normalize(raw){
+ if(!raw||!Array.isArray(raw.elements)||raw.remark)throw Error('Invalid or incomplete Overpass response'+(raw&&raw.remark?': '+raw.remark:''));
+ const areas=[],roads=[],memberKinds=new Set(),warnings=[];
+ const area=(e,k,outer,inner)=>({id:e.type+'/'+e.id,kind:k,tags:e.tags||{},heightM:meters(e.tags?.height),levels:numeric(e.tags?.['building:levels']),minHeightM:meters(e.tags?.min_height),polygons:outer.map(r=>({outer:r,holes:inner.filter(h=>inside(h[0],r))}))});
+ for(const e of raw.elements){const k=kind(e.tags||{});if(e.type!=='relation'||!k)continue;
+  const ms=e.members||[],o=rings(ms,'outer'),i=rings(ms,'inner');
+  if(o.incomplete||i.incomplete||!o.out.length||i.out.some(h=>!o.out.some(r=>inside(h[0],r)))){warnings.push('Skipped incomplete relation '+e.id);continue}
+  areas.push(area(e,k,o.out,i.out));ms.filter(m=>m.type==='way'&&(!m.role||m.role==='outer'||m.role==='inner')).forEach(m=>memberKinds.add(k+'/'+m.ref));
+ }
+ for(const e of raw.elements){if(e.type!=='way')continue;const t=e.tags||{},g=geometry(e.geometry);
+  if(t.highway&&g.length>1)roads.push({id:'way/'+e.id,tags:t,nodeIds:e.nodes||[],points:g.map(p=>project(p.lat,p.lon)),widthM:meters(t.width),lanes:numeric(t.lanes)});
+  const k=kind(t);if(k&&!memberKinds.has(k+'/'+e.id)){if(close(g))areas.push(area(e,k,[g.map(p=>project(p.lat,p.lon))],[]));else warnings.push('Skipped non-closed '+k+' way '+e.id)}
+ }
+ if(!areas.length&&!roads.length)throw Error('No usable geography in response');
+ return {schemaVersion:1,source:'OpenStreetMap contributors',license:'ODbL 1.0',attributionUrl:'https://www.openstreetmap.org/copyright',sourceTimestamp:raw.osm3s?.timestamp_osm_base||null,importedAt:new Date().toISOString(),origin:ORIGIN,bbox:BBOX,axes:{x:'east metres',z:'south metres'},roads,areas,warnings};
+}
+let data=null,view={x:0,z:0,s:1},hits=[],drag=null,moved=false;
+const canvas=$('map'),ctx=canvas.getContext('2d');
+const minor=t=>['footway','path','steps','cycleway','service','pedestrian','track','corridor','bridleway'].includes(t.highway);
+function fit(){const a=project(BBOX[2],BBOX[1]),b=project(BBOX[0],BBOX[3]);const r=canvas.getBoundingClientRect();view={x:(a[0]+b[0])/2,z:(a[1]+b[1])/2,s:Math.min(r.width/(b[0]-a[0]),r.height/(b[1]-a[1]))*.94};draw()}
+function path(points,closePath=false){const p=new Path2D();points.forEach(([x,z],i)=>i?p.lineTo(x,z):p.moveTo(x,z));if(closePath)p.closePath();return p}
+function draw(){
+ const r=canvas.getBoundingClientRect(),d=window.devicePixelRatio||1,W=r.width,H=r.height;
+ if(canvas.width!==Math.round(W*d)||canvas.height!==Math.round(H*d)){canvas.width=Math.round(W*d);canvas.height=Math.round(H*d)}
+ ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,W,H);ctx.fillStyle='#eae6dc';ctx.fillRect(0,0,W,H);hits=[];
+ ctx.translate(W/2,H/2);ctx.scale(view.s,view.s);ctx.translate(-view.x,-view.z);
+ const drawArea=a=>{const p=new Path2D();for(const poly of a.polygons){p.addPath(path(poly.outer,true));poly.holes.forEach(h=>p.addPath(path(h,true)))}
+ ctx.fillStyle=a.kind==='water'?'#9abfce':a.kind==='park'?'#a4bf98':a.heightM!=null?'#8d8377':'#aaa196';ctx.fill(p,'evenodd');if(a.kind==='building'){ctx.strokeStyle='#80786d';ctx.lineWidth=.45/view.s;ctx.stroke(p)}
+ hits.push({p,item:a,area:true})};
+ if(data){for(const k of ['park','water','building'])if(k!=='building'||$('buildings').checked)for(const a of data.areas)if(a.kind===k)drawArea(a);
+ if($('roads').checked){for(const road of data.roads){const t=road.tags;if(minor(t)&&!$('minor').checked)continue;const p=path(road.points);const w=road.widthM|| (minor(t)?2.2:['primary','trunk'].includes(t.highway)?12:7);ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle='#b5ad9e';ctx.lineWidth=w+1;ctx.stroke(p);ctx.strokeStyle=t.bridge&&t.bridge!=='no'?'#fff4d6':'#fffdfa';ctx.lineWidth=w;ctx.stroke(p);hits.push({p,item:road,area:false,w});}
+ if($('labels').checked&&view.s>.43){const named=new Set();ctx.font=(11/view.s)+'px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';for(const road of data.roads){const n=road.tags.name;if(!n||named.has(n)||minor(road.tags)&&!$('minor').checked)continue;const p=road.points[Math.floor(road.points.length/2)];if(Math.abs(p[0]-view.x)*view.s>W/2||Math.abs(p[1]-view.z)*view.s>H/2)continue;named.add(n);ctx.lineWidth=3/view.s;ctx.strokeStyle='#fffdfa';ctx.strokeText(n,...p);ctx.fillStyle='#514b42';ctx.fillText(n,...p)}}}}
+ if($('old').checked){ctx.strokeStyle='#b73550';ctx.globalAlpha=.75;ctx.lineCap='round';for(const e of OLD){ctx.lineWidth=Math.max(e.w*.42,1.5/view.s);ctx.stroke(path([e.a,e.b]))}ctx.globalAlpha=1}
+ ctx.fillStyle='#70263a';ctx.beginPath();ctx.arc(ORIGIN.x,ORIGIN.z,4/view.s,0,2*Math.PI);ctx.fill();
+ ctx.setTransform(d,0,0,d,0,0);ctx.fillStyle='#252c2b';ctx.font='12px system-ui';const unit=view.s>=1?50:view.s>=.5?100:200;ctx.fillRect(14,H-19,unit*view.s,3);ctx.fillText(unit+' m',14,H-24);
+}
+function use(raw){data=normalize(raw);const b=data.areas.filter(a=>a.kind==='building'),h=b.filter(a=>a.heightM!==null),l=b.filter(a=>a.levels!==null);$('status').textContent=data.roads.length+' road ways · '+b.length+' building footprints · '+h.length+' recorded heights · '+l.length+' recorded storey counts · '+data.warnings.length+' geometry warnings';$('export').disabled=false;fit()}
+$('load').onclick=async()=>{const button=$('load');button.disabled=true;$('status').textContent='Requesting map data…';try{const res=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:new URLSearchParams({data:query}),signal:AbortSignal.timeout(110000)});if(!res.ok)throw Error('HTTP '+res.status);use(await res.json())}catch(e){$('status').textContent='Fetch failed: '+e.message+'. Use the manual JSON import below.'}finally{button.disabled=false}};
+$('file').onchange=async e=>{try{const f=e.target.files[0];if(f)use(JSON.parse(await f.text()))}catch(err){$('status').textContent='Import failed: '+err.message}finally{e.target.value=''}};
+$('export').onclick=()=>{if(!data)return;const url=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='westminster-geography.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+$('fit').onclick=fit;['buildings','roads','minor','old','labels'].forEach(id=>$(id).onchange=draw);
+canvas.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY};moved=false;canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>1)moved=true;view.x-=dx/view.s;view.z-=dy/view.s;drag={x:e.clientX,y:e.clientY};draw()});
+canvas.addEventListener('pointerup',e=>{drag=null;if(moved)return;const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left-r.width/2)/view.s+view.x,z=(e.clientY-r.top-r.height/2)/view.s+view.z;ctx.save();ctx.setTransform(1,0,0,1,0,0);let hit=null;for(let i=hits.length-1;i>=0;i--){const h=hits[i];ctx.lineWidth=h.w||1;if(h.area?ctx.isPointInPath(h.p,x,z,'evenodd'):ctx.isPointInStroke(h.p,x,z)){hit=h.item;break}}ctx.restore();$('detail').textContent=hit?hit.id+' · '+Object.entries(hit.tags).map(([k,v])=>k+': '+v).join(' · '):'No mapped feature selected.'});
+canvas.addEventListener('pointercancel',()=>drag=null);
+canvas.addEventListener('wheel',e=>{e.preventDefault();const r=canvas.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,old=view.s;view.s=Math.max(.08,Math.min(20,old*Math.exp(-e.deltaY*.0015)));view.x+=dx/old-dx/view.s;view.z+=dy/old-dy/view.s;draw()},{passive:false});
+new ResizeObserver(draw).observe(canvas);fit();
+</script></html>
