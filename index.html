@@ -1397,11 +1397,60 @@ function poseStatue(d,pose,x,z,ry,base,sc,extra){const B=buildPerson(d);const pa
  const geo=mergeC(parts);if(pose.lean)geo.rotateX(pose.lean);geo.scale(sc,sc,sc);geo.rotateY(ry);geo.translate(x,base,z);const m=new THREE.Mesh(geo,MAT.bronzeS);m.castShadow=true;m.receiveShadow=true;scene.add(m);return m;}
 function plinth(x,z,ry,h,stone,lines){const G=MG(stone==='slate'?'ironB':'granite');box(G,x-1.35,0,z-1.35,x+1.35,.55,z+1.35,1,1,G);box(G,x-.95,.55,z-.95,x+.95,h-.45,z+.95,1,1,G);box(G,x-1.15,h-.45,z-1.15,x+1.15,h,z+1.15,1,1,G);box(G,x-1.2,.55,z-1.2,x+1.2,.75,z+1.2,1,1,G);
  const pl=new THREE.Mesh(new THREE.PlaneGeometry(1.55,.48),std({map:nameTex(lines,stone==='slate'?'#2c2f33':null),roughness:.6,metalness:.2}));const fx=Math.sin(ry),fz=Math.cos(ry);pl.position.set(x+fx*.96,h*.55,z+fz*.96);pl.rotation.y=ry;scene.add(pl);addCol(x-1.35,z-1.35,x+1.35,z+1.35,h);}
-/* ================= BRONZE STATUES FROM REAL BODIES =================
-   Once the motion-captured people have loaded, every figure in Parliament Square is recast: a real human body is posed
-   (natural standing weight from the mocap idle, plus each statue's own lean), frozen, scaled up to monument size and given
-   a patinated bronze finish. Churchill (Ivor Roberts-Jones, 1973) gets his stooped, forward-leaning stance, the long
-   military greatcoat to below the knee, and the walking stick planted in his right hand. */
+function churchillMonument(x,z,ry,description,pose){
+ const height=3.57;
+ const fallback=new THREE.Group();
+ fallback.position.set(x,0,z);fallback.rotation.y=ry;scene.add(fallback);
+ const stone=new THREE.Mesh(new THREE.BoxGeometry(1.86,3.46,1.46),MAT.granite);
+ stone.position.y=1.73;stone.castShadow=stone.receiveShadow=true;fallback.add(stone);
+ const footing=new THREE.Mesh(new THREE.BoxGeometry(1.68,.11,1.31),MAT.ironB);
+ footing.position.y=3.515;fallback.add(footing);
+ const figure=poseStatue(description,pose,x,z,ry,height,1.85);
+ addCol(x-.73,z-.93,x+.73,z+.93,height);
+ plane(MG('granite'),x-1.65,z-1.85,x+1.65,z+1.85,.051,1.15);
+ if(!THREE.GLTFLoader)return;
+ mkGLTF().load('churchill-monument.glb',({scene:model})=>{
+   const detail=model.getObjectByName('Churchill_detail');
+   const distance=model.getObjectByName('Churchill_distance');
+   if(!detail||!distance)return;
+   const stoneGrain=ctex(512,512,(g,w,h)=>{
+     const rng=mkRng(7159),pixels=g.createImageData(w,h);
+     for(let i=0;i<w*h;i++){
+       const tone=166+(rng()-.5)*62+(rng()<.065?-40:0);
+       pixels.data.set([tone,tone-1,tone-3,255],i*4);
+     }
+     g.putImageData(pixels,0,0);
+   });
+   const castRelief=ctex(256,256,(g,w,h)=>{
+     const rng=mkRng(1973),field=g.createImageData(w,h);
+     for(let i=0;i<w*h;i++){
+       const tone=125+(rng()-.5)*85;
+       field.data.set([tone,tone,tone,255],i*4);
+     }
+     g.putImageData(field,0,0);
+   },true,false);
+   const materials=new Set();
+   model.traverse(mesh=>{
+     if(!mesh.isMesh)return;
+     mesh.castShadow=mesh.receiveShadow=true;
+     const m=mesh.material;
+     if(materials.has(m))return;
+     materials.add(m);
+     if(m.name==='Churchill cast bronze'){
+       m.bumpMap=castRelief;m.bumpScale=.0035;addRefl(m,.55);
+     }else if(m.name==='Churchill granite'||m.name==='Churchill inscription'){
+       m.color.setScalar(m.name==='Churchill granite'?1:.69);
+       m.map=stoneGrain;m.bumpMap=stoneGrain;m.bumpScale=.0016;
+     }
+   });
+   const lod=new THREE.LOD();
+   lod.addLevel(detail,0);lod.addLevel(distance,LOWQ?25:43);model.add(lod);
+   model.position.set(x,0,z);model.rotation.y=ry;scene.add(model);
+   scene.remove(fallback,figure);
+   stone.geometry.dispose();footing.geometry.dispose();figure.geometry.dispose();
+ },undefined,error=>console.warn('Churchill monument',error));
+}
+// Recast the other figures from the animated pedestrian meshes.
 const BRONZE=[];
 function bronzeMat(){if(bronzeMat.m)return bronzeMat.m;const m=std({color:lin(0x3a2e22),metalness:.85,roughness:.38});m.envMapIntensity=.9;return bronzeMat.m=m;}
 function bakeBody(B,mod){const o=THREE.SkeletonUtils.clone(B.root);let sm=null;o.traverse(k=>{if(k.isSkinnedMesh)sm=k;});const C=NPC.clips[B.fem?'f':'m'];
@@ -1411,18 +1460,14 @@ function bakeBody(B,mod){const o=THREE.SkeletonUtils.clone(B.root);let sm=null;o
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('uv',g0.attributes.uv);g.setIndex(g0.index);g.scale(.01,.01,.01);g.computeVertexNormals();
  const wp=nm=>{const b=bones[nm];if(!b)return null;const q=new THREE.Vector3();b.getWorldPosition(q);sm.worldToLocal(q);return q.multiplyScalar(.01);};
  return {g,hand:wp('Bip01_R_Hand'),pelvis:wp('Bip01_Pelvis'),knee:wp('Bip01_R_Calf')};}
-const BRONZE_AV={CHURCHILL:'Business_Male_04',GANDHI:'Male_Adult_13',MANDELA:'Male_Adult_04',LINCOLN:'Business_Male_02',FAWCETT:'Business_Female_03','LLOYD GEORGE':'Male_Adult_03',SMUTS:'Business_Male_01'};
+const BRONZE_AV={GANDHI:'Male_Adult_13',MANDELA:'Male_Adult_04',LINCOLN:'Business_Male_02',FAWCETT:'Business_Female_03','LLOYD GEORGE':'Male_Adult_03',SMUTS:'Business_Male_01'};
 function bronzeStatues(){if(!NPC.ready||bronzeStatues.done||!BRONZE.length)return;bronzeStatues.done=1;
  for(const S of BRONZE){try{const want=BRONZE_AV[S.id]||(S.fem?'Business_Female_01':['Business_Male_01','Business_Male_02','Business_Male_04','Male_Adult_03'][Math.abs(S.x*7+S.z|0)%4]);
-  const B=NPC.av.find(b=>b.name===want)||NPC.av.find(b=>b.fem===S.fem);if(!B)continue;const ch=S.id==='CHURCHILL';
-  const R=S.seated?{g:npcSeated(B).g.clone()}:bakeBody(B,ch?(b=>{const r=(nm,ax,ang)=>{const k=b[nm];if(k)k.rotateOnAxis(ax,ang);};const Z=new THREE.Vector3(0,0,1);
-    r('Bip01_Spine',Z,.12);r('Bip01_Spine1',Z,.14);r('Bip01_Spine2',Z,.08);r('Bip01_Neck',Z,-.16);r('Bip01_Head',Z,-.08);r('Bip01_R_UpperArm',Z,.25);r('Bip01_R_Forearm',Z,.35);}):null);
+  const B=NPC.av.find(b=>b.name===want)||NPC.av.find(b=>b.fem===S.fem);if(!B)continue;
+  const R=S.seated?{g:npcSeated(B).g.clone()}:bakeBody(B);
   const parts=[R.g];
-  if(ch){// greatcoat skirt and walking stick
-   const pv=R.pelvis||new THREE.Vector3(0,1,0),top=pv.y-.02,bot=.36;const coat=new THREE.CylinderGeometry(.18,.245,top-bot,28,3,true);coat.scale(1,1,.8);coat.translate(pv.x,(top+bot)/2,pv.z+.015);parts.push(coat);
-   const h=R.hand||new THREE.Vector3(-.3,.8,.15);const st=new THREE.CylinderGeometry(.018,.022,h.y,8);st.translate(h.x,h.y/2,h.z+.08);parts.push(st);}
-  R.g.computeBoundingBox();const ht=R.g.boundingBox.max.y,want2=S.want||(ch?3.5:S.id==='FAWCETT'?2.45:2.75),sc=want2/ht;const M=S.mat==='marble'?MAT.marble:S.mat==='gilt'?MAT.gilt:bronzeMat();
-  const G=new THREE.Group();for(const q of parts){const me=new THREE.Mesh(q,M);me.castShadow=true;me.receiveShadow=true;G.add(me);}G.scale.set(sc*(ch?1.14:1),sc,sc*(ch?1.12:1));G.position.set(S.x,S.h,S.z);G.rotation.y=S.ry;scene.add(G);if(S.om)S.om.visible=false;}catch(e){console.warn('bronze',S.id,e);}}}
+  R.g.computeBoundingBox();const ht=R.g.boundingBox.max.y,want2=S.want||(S.id==='FAWCETT'?2.45:2.75),sc=want2/ht;const M=S.mat==='marble'?MAT.marble:S.mat==='gilt'?MAT.gilt:bronzeMat();
+  const G=new THREE.Group();for(const q of parts){const me=new THREE.Mesh(q,M);me.castShadow=true;me.receiveShadow=true;G.add(me);}G.scale.setScalar(sc);G.position.set(S.x,S.h,S.z);G.rotation.y=S.ry;scene.add(G);if(S.om)S.om.visible=false;}catch(e){console.warn('bronze',S.id,e);}}}
 function parliamentSquare(){const BR=0x4a3b2a;const coat={type:'coat',col:BR},base=(o)=>Object.assign({h:1.8,skin:BR,hair:{style:'short',col:BR},top:coat,legs:{col:BR},shoes:BR},o);
  const S=[
  ['CHURCHILL',['CHURCHILL',''],'Sir Winston Churchill','Ivor Roberts-Jones, 1973',-44,-144,PI/2,base({hair:{style:'bald',col:BR},w:1.18,acc:{r:'stick'}}),{lean:.14,r:{ax:-.25,ex:-.15},l:{ax:-.1,ex:-.3}}],
@@ -1437,9 +1482,12 @@ function parliamentSquare(){const BR=0x4a3b2a;const coat={type:'coat',col:BR},ba
  ['MANDELA',['NELSON MANDELA','1918 – 2013'],'Nelson Mandela','Ian Walters, 2007',-84,-100,-PI/4,base({h:1.85,hair:{style:'short',col:BR},top:{type:'shirt',col:BR,shirt:BR}}),{r:{ax:-.7,az:.75,ex:-.25},l:{ax:-.7,az:.75,ex:-.25}}],
  ['CANNING',['CANNING',''],'George Canning','Sir Richard Westmacott, 1832',-121,-144,PI/2,base({hair:{style:'side',col:BR}}),{robe:1,r:{ax:-.55,ex:-.7}}],
  ['LINCOLN',['ABRAHAM LINCOLN',''],'Abraham Lincoln','Augustus Saint-Gaudens (cast), 1920',-121,-117,PI/2,base({h:1.95,w:.9,hair:{style:'side',col:BR},beard:BR}),{lean:.06,r:{ax:-.3,ex:-1.85},l:{ax:.3,ex:-.7}}]];
- for(const [id,lines,name,by,x,z,ry,d,pose,stone] of S){const h=id==='LINCOLN'?4.2:id==='CHURCHILL'?3.8:3.4;plinth(x,z,ry,h,stone,lines);
+ for(const [id,lines,name,by,x,z,ry,d,pose,stone] of S){
+  LANDMARKS.push({x,z,r:4.5,text:'Statue of '+name+' — '+by});
+  if(id==='CHURCHILL'){churchillMonument(x,z,ry,d,pose);continue;}
+  const h=id==='LINCOLN'?4.2:3.4;plinth(x,z,ry,h,stone,lines);
   let extra=null;if(id==='LINCOLN'){const c=new THREE.BoxGeometry(.7,.9,.6);c.translate(0,.45,-.55);const cb=new THREE.BoxGeometry(.7,.9,.08);cb.translate(0,1.2,-.82);extra=[c,cb];}
-  const om=poseStatue(d,pose,x,z,ry,h,id==='FAWCETT'?1.75:1.6,extra);BRONZE.push({om,x,z,ry,h,id,fem:!!d.fem});LANDMARKS.push({x,z,r:4.5,text:'Statue of '+name+' — '+by});}
+  const om=poseStatue(d,pose,x,z,ry,h,id==='FAWCETT'?1.75:1.6,extra);BRONZE.push({om,x,z,ry,h,id,fem:!!d.fem});}
  plane(MG('grass'),-128,-150,-114,-104,.04,8);tufts(-127,-149,-115,-105,.5);}
 // ---- K2 and K6 telephone kiosks ----
 // K2 (1926, c1927 here) and K6 (1935) kiosks by Giles Gilbert Scott, as listed outside the former HM Treasury:

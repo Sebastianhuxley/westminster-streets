@@ -24,3 +24,7 @@ Nearby police cars use the [BMW Touring British Police Traffic Car](https://sket
 The game asset removes construction lines, merges geometry by material, corrects the mirrored livery faces, adjusts scale and orientation, and gives each wheel its own pivot for steering and rotation. The paint and Battenburg markings are tuned for the game’s daylight, and the car uses fictional UK-format registration plates. The front has revised projector and grille materials and modelled lower intake trim. Geometry and textures are optimised for browser loading. The game uses its simpler police car model at a distance or if the BMW fails to load.
 
 Nearby BMWs sample the road height at each wheel. The body follows kerbs and cambers while retaining braking pitch and cornering roll. Each car gets its own fictional registration, and the emergency LEDs cast a short blue spill that is more visible at night and in wet weather. Police drivers leave more braking room around other vehicles and street furniture. Sirens change pitch with relative speed and are muffled behind buildings. Tyre noise changes between tarmac, paving and grass.
+
+## Churchill monument
+
+The Parliament Square monument uses a custom reference-based 3D sculpt of Ivor Roberts-Jones's statue. It includes the greatcoat, cane, dark bronze footing and granite plinth with the inscription cut into the mesh. The game switches between a detailed and simplified casting by distance. The sculpture uses vertex-colour patina and a tiled bump texture for the cast finish.
