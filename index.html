@@ -5333,10 +5333,25 @@ const LINES={
 const CAUSE_LINES={ps:['Free, free Palestine!','Ceasefire now!','Stop arming Israel!','Let Gaza live!'],il:['Bring peace — stand with Israel!','Together against antisemitism.','Never again is now.','Am Yisrael Chai!'],as:['Journalism is not a crime!','Pardon Assange!','Defend press freedom.','Truth is not treason.']};
 const VOICE={student:[1.12,1.1],commuter:[1.18,1],builder:[.98,.85],pensioner:[.82,.8],nan:[.86,1.2],fan:[1.08,.9],tourist:[1,1.05],office:[1.12,1.15],met:[.95,.9],armed:[.95,.85],guard:[1,1],protester:[1.05,1]};
 const SAY={el:null,p:null,t:0,cd:0,last:new Map(),v:null};
-function pickVoice(fem){try{const vs=speechSynthesis.getVoices();const gb=vs.filter(v=>/en[-_]GB/i.test(v.lang));const pool=gb.length?gb:vs.filter(v=>/^en/i.test(v.lang));if(!pool.length)return null;
- const f=pool.filter(v=>/female|woman|serena|kate|stephanie|martha|libby|sonia|hazel|susan|fiona/i.test(v.name)),m=pool.filter(v=>/male|daniel|arthur|oliver|george|ryan|thomas|malcolm/i.test(v.name)&&!/female/i.test(v.name));return (fem?f[0]:m[0])||pool[0];}catch(e){return null;}}
+// Browser voices may arrive after page load; refresh before every choice.
+const FEMALE_VOICES=/\b(female|woman|serena|kate|stephanie|martha|libby|sonia|hazel|susan|fiona|victoria|samantha|moira)\b/i;
+const MALE_VOICES=/\b(male|man|daniel|arthur|oliver|george|ryan|thomas|malcolm|alex|fred|david|james)\b/i;
+let streetVoices=[];
+function refreshStreetVoices(){try{streetVoices=speechSynthesis.getVoices();}catch(e){streetVoices=[];}}
+if(window.speechSynthesis){refreshStreetVoices();speechSynthesis.addEventListener?.('voiceschanged',refreshStreetVoices);}
+function pickVoice(fem){try{refreshStreetVoices();const vs=streetVoices.filter(v=>/^en(?:[-_]|$)/i.test(v.lang));if(!vs.length)return null;
+  const score=v=>{const n=v.name||'',s=n+' '+(v.voiceURI||'');let q=/^en[-_]GB$/i.test(v.lang)?100:0;
+    if(/neural|natural|premium|enhanced|high.quality/i.test(s))q+=100;
+    if(/microsoft|google|siri|apple/i.test(s))q+=10;
+    if(/compact|espeak|festival|flite|pico|robot|legacy|low.quality/i.test(s))q-=120;
+    if(/\b(?:desktop|standard|default)\b/i.test(s))q-=15;
+    const female=FEMALE_VOICES.test(n),male=MALE_VOICES.test(n)&&!female;
+    if(fem?(female&&!male):(male&&!female))q+=45;
+    else if(female||male)q-=85;
+    return q;};
+  return vs.slice().sort((a,b)=>score(b)-score(a))[0];}catch(e){return null;}}
 function sayLine(p,txt){SAY.el=SAY.el||document.getElementById('say');const A=ARCHI[p.arch];SAY.el.innerHTML='<b>'+(A?A.name.replace(/^The /,''):'')+'</b>'+txt;SAY.el.style.opacity=1;SAY.p=p;SAY.t=3.8;SAY.last.set(p,performance.now());
- try{if(window.speechSynthesis&&AU.c&&!(AU.m&&AU.m.gain.value<.01)&&txt!=='...'){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);const vv=VOICE[p.arch]||[1,1];u.rate=vv[0];u.pitch=(p.d&&p.d.fem)?Math.min(2,vv[1]*1.18):vv[1];u.volume=.9;const v=pickVoice(p.d&&p.d.fem);if(v)u.voice=v;u.lang='en-GB';speechSynthesis.speak(u);}}catch(e){}}
+  try{if(window.speechSynthesis&&AU.c&&!(AU.m&&AU.m.gain.value<.01)&&txt!=='...'){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);const vv=VOICE[p.arch]||[1,1];u.rate=1+(vv[0]-1)*.2;u.pitch=1+(vv[1]-1)*.15;u.volume=.9;const v=pickVoice(p.d&&p.d.fem);if(v){u.voice=v;u.lang=v.lang;}else u.lang='en-GB';speechSynthesis.speak(u);}}catch(e){}}
 const _svp=new V3();
 function updateSpeech(dt){SAY.el=SAY.el||document.getElementById('say');if(SAY.t>0){SAY.t-=dt;const p=SAY.p;if(SAY.t<=0||!p||!p.m||!p.m.g.visible){SAY.el.style.opacity=0;SAY.t=0;}
   else{_svp.copy(p.m.g.position);_svp.y+=2.05;_svp.project(camera);if(_svp.z>1){SAY.el.style.opacity=0;}else{SAY.el.style.left=((_svp.x+1)/2*innerWidth)+'px';SAY.el.style.top=((1-_svp.y)/2*innerHeight)+'px';}}}
