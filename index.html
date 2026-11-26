@@ -864,10 +864,26 @@ defWin('clP',{w:1.4,h:2.9,glaze:2,rows:4,cols:3,depth:5},()=>classicFrame(1.4,2.
 defWin('clS',{w:1.4,h:2.9,glaze:2,rows:4,cols:3,depth:5},()=>classicFrame(1.4,2.9,'seg',0,0));
 defWin('clA',{w:1.6,h:3.2,arch:3,glaze:2,rows:4,cols:3,depth:5},()=>classicFrame(1.6,3.2,'',1,1));
 defWin('mod',{w:1.5,h:2.0,glaze:2,rows:2,cols:2,depth:5,bar:0x2a2c2e},()=>classicFrame(1.5,2.0,'',0,0));
-function buildWindows(){for(const k in WSTY){const S=WSTY[k];if(!S.list.length)continue;const n=S.list.length,M4=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),sv=new V3();
- const gl=new THREE.InstancedMesh(new THREE.PlaneGeometry(S.o.w,S.o.h),S.mat,n);const fg=S.frame();const fr=new THREE.InstancedMesh(fg,k.startsWith('geo')?MAT.vp_white:k.startsWith('ab')||k==='h7'?MAT.abAshlar:k.startsWith('pal')?MAT.bbAshlar:MAT.paAshlar,n);
- S.list.forEach(([x,y,z,ry,sc],i)=>{e.set(0,ry,0);q.setFromEuler(e);M4.compose(new V3(x,y,z),q,sv.set(sc,sc,sc));gl.setMatrixAt(i,M4);M4.compose(new V3(x,y,z),q,sv.set(sc,sc,sc));fr.setMatrixAt(i,M4);});
- fr.castShadow=true;fr.receiveShadow=true;scene.add(gl,fr);}}
+// Spatially batch full-detail windows on mobile. Share the actual vertex buffers,
+// but give each batch its own conservative world-space bounding sphere for all render passes.
+function buildWindows(){for(const k in WSTY){const S=WSTY[k];if(!S.list.length)continue;
+ const M4=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),sv=new V3(),pos=new V3();
+ const glassGeo=new THREE.PlaneGeometry(S.o.w,S.o.h),frameGeo=S.frame();
+ const frameMat=k.startsWith('geo')?MAT.vp_white:k.startsWith('ab')||k==='h7'?MAT.abAshlar:k.startsWith('pal')?MAT.bbAshlar:MAT.paAshlar;
+ const buckets=new Map(),size=240;
+ for(const item of S.list){const key=LOWQ?Math.floor(item[0]/size)+','+Math.floor(item[2]/size):'all';let list=buckets.get(key);if(!list)buckets.set(key,list=[]);list.push(item);}
+ function bounded(base,list){
+  const g=new THREE.BufferGeometry();for(const name in base.attributes)g.setAttribute(name,base.attributes[name]);if(base.index)g.setIndex(base.index);
+  base.computeBoundingSphere();const b=base.boundingSphere,extent=b.center.length()+b.radius;
+  const bounds=new THREE.Box3();let pad=0;for(const [x,y,z,ry,sc] of list){bounds.expandByPoint(pos.set(x,y,z));pad=Math.max(pad,Math.abs(sc)*extent);}
+  bounds.expandByScalar(pad);g.boundingSphere=bounds.getBoundingSphere(new THREE.Sphere());return g;
+ }
+ for(const list of buckets.values()){
+  const n=list.length,gl=new THREE.InstancedMesh(LOWQ?bounded(glassGeo,list):glassGeo,S.mat,n),fr=new THREE.InstancedMesh(LOWQ?bounded(frameGeo,list):frameGeo,frameMat,n);
+  list.forEach(([x,y,z,ry,sc],i)=>{e.set(0,ry,0);q.setFromEuler(e);M4.compose(pos.set(x,y,z),q,sv.set(sc,sc,sc));gl.setMatrixAt(i,M4);fr.setMatrixAt(i,M4);});
+  gl.frustumCulled=fr.frustumCulled=LOWQ;fr.castShadow=true;fr.receiveShadow=true;scene.add(gl,fr);
+ }
+}}
 // ---- faces & helpers ----
 function face(ax,az,bx,bz,nx,nz){const L=Math.hypot(bx-ax,bz-az);return {ax,az,tx:(bx-ax)/L,tz:(bz-az)/L,len:L,nx,nz,ry:Math.atan2(nx,nz)};}
 const FP=(F,u,o)=>[F.ax+F.tx*u+F.nx*o,F.az+F.tz*u+F.nz*o];
@@ -3916,7 +3932,10 @@ function setupRiverRefl(){const s=LOWQ?.33:.5;RIVR.rt=new THREE.WebGLRenderTarge
  // everything already in the world reflects, except the water itself and the river bed
  scene.traverse(o=>{if(!(o.isMesh||o.isInstancedMesh||o.isGroup))return;const m=o.material;if(m===MAT.river||m===MAT.bed)return;o.layers.enable(1);});sky.layers.enable(1);RIVR.cam.layers.set(1);}
 const _rp=new V3(),_rv=new V3(),_rt=new V3(),_rl=new V3(),_rq=new THREE.Vector4(),_rc=new THREE.Vector4(),_rpl=new THREE.Plane(),_rm=new THREE.Matrix4(),_rn=new V3(0,1,0);
+const riverViewFrustum=new THREE.Frustum(),riverViewMatrix=new THREE.Matrix4(),riverVisibleBounds=new THREE.Box3(new V3(57,-4.5,-901),new V3(263,-2,901));
 function updateRiverRefl(){if(!RIVR.rt)return;const cp=camera.position;const near=cp.x>-160&&cp.x<480&&cp.y>RIVR.WY+.3&&!(player&&player.ug)&&state!=='cast';RIVR.on.value=near?1:0;if(!near)return;
+ // Avoid an entire off-screen render when the river surface is outside the camera view.
+ if(LOWQ){camera.updateMatrixWorld();riverViewMatrix.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);riverViewFrustum.setFromProjectionMatrix(riverViewMatrix);if(!riverViewFrustum.intersectsBox(riverVisibleBounds))return;}
  const vc=RIVR.cam;_rp.set(cp.x,RIVR.WY,cp.z);_rv.subVectors(_rp,cp);_rv.reflect(_rn).negate();_rv.add(_rp);
  _rm.extractRotation(camera.matrixWorld);_rl.set(0,0,-1).applyMatrix4(_rm).add(cp);_rt.subVectors(_rp,_rl);_rt.reflect(_rn).negate();_rt.add(_rp);
  vc.position.copy(_rv);vc.up.set(0,1,0).applyMatrix4(_rm).reflect(_rn);vc.lookAt(_rt);vc.far=camera.far;vc.near=camera.near;vc.updateMatrixWorld();vc.projectionMatrix.copy(camera.projectionMatrix);
@@ -6245,7 +6264,9 @@ $('pBB').addEventListener('click',()=>{togglePause();enterView();});
 document.querySelectorAll('[data-tod2]').forEach(b=>b.addEventListener('click',()=>{setTOD(b.dataset.tod2);document.querySelectorAll('[data-tod2]').forEach(x=>x.classList.toggle('on',x===b));}));
 document.querySelectorAll('[data-q]').forEach(b=>b.addEventListener('click',()=>setQuality(b.dataset.q)));
 document.querySelectorAll('[data-wx]').forEach(b=>b.addEventListener('click',()=>setWeather(b.dataset.wx)));
-function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-(last||now))/1000);last=now;if(state!=='pause'&&state!=='ride')update(dt);
+let graphicsLost=false;
+window.wsPerf=()=>({pixelRatio:renderer.getPixelRatio(),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,graphicsLost});
+function loop(now){if(graphicsLost)return;requestAnimationFrame(loop);const dt=Math.min(.05,(now-(last||now))/1000);last=now;if(state!=='pause'&&state!=='ride')update(dt);
  if(ssao&&ssao.enabled&&state!=='title'){perfN++;perfT+=dt;if(perfN===180){if(perfT/180>.034)setSSAO(false);}}
  const half=(state==='view'||state==='title')?90:150;if(SC.right!==half){SC.left=SC.bottom=-half;SC.right=SC.top=half;SC.updateProjectionMatrix();}
  updateBounce();updateRiverRefl();updateWX(dt);updateInt(dt);try{updateProtests(performance.now()/1000);updateSpeech(dt);}catch(e){}sunFill.color.copy(sun.color);sunFill.intensity=sun.intensity*(todName==='day'?.13:.3);sun.intensity*=.78;sunFill.position.copy(sun.position).sub(sun.target.position);updateGrass();if(beacon&&beacon.visible){const F=focusPos(),d=Math.hypot(F.x-beacon.position.x,F.z-beacon.position.z);beacon.material.uniforms.uOp.value=.95*Math.min(1,Math.max(.12,(d-12)/60));}if(state==='cast'){castUpdate(dt);renderer.render(castScene,castCam);}else if(composer)composer.render();else renderer.render(scene,camera);}
@@ -6257,7 +6278,7 @@ $('playBB').addEventListener('click',()=>{$('play').click();enterView();vcam.yaw
 // if anything goes wrong on a device we can't test, say so on screen instead of failing silently
 function showErr(msg){try{let d=document.getElementById('errbox');if(!d){d=document.createElement('div');d.id='errbox';d.style.cssText='position:fixed;left:10px;right:10px;bottom:10px;z-index:99;background:rgba(120,10,20,.92);color:#fff;font:13px/1.35 system-ui,sans-serif;padding:10px 12px;border-radius:10px;white-space:pre-wrap;pointer-events:none';document.body.appendChild(d);}d.textContent=(d.textContent?d.textContent+'\n':'')+String(msg).slice(0,300);}catch(e){}}
 addEventListener('error',e=>showErr('Error: '+(e.message||e)+(e.lineno?' @'+e.lineno:'')));addEventListener('unhandledrejection',e=>showErr('Error: '+(e.reason&&e.reason.message||e.reason)));
-try{renderer.domElement.addEventListener('webglcontextlost',()=>showErr('The graphics memory ran out on this device (WebGL context lost).'));}catch(e){}
+try{renderer.domElement.addEventListener('webglcontextlost',()=>{graphicsLost=true;showErr('Graphics context lost. Reload the page to restart.');});}catch(e){}
 $('play').addEventListener('click',()=>{if(SHARP)setTimeout(()=>{try{localStorage.setItem('wsBoot','0');}catch(e){}},20000);if(SHARP_AUTO_OFF)setTimeout(()=>{try{flash('Sharp graphics off','Your phone struggled — switched back to standard. Turn it on again in MENU.','#fff');}catch(e){}},4500);try{AU.init();AU.c&&AU.c.resume();}catch(e){}$('start').style.display='none';document.body.classList.add('playing');state='play';cam.yaw=player.h+PI;sizeMini();zoneCur='';flash('Westminster','Monday morning, SW1','#fff');try{startStep();}catch(e){showErr('Start failed: '+e.message);}});
 try{netInit();}catch(e){console.warn('netInit',e);}$('play').addEventListener('click',()=>{setTimeout(netAutoJoin,1500);});try{if(new URLSearchParams(location.search).get('join'))$('loading').textContent='Press PLAY to join your friend’s game';}catch(e){}
 requestAnimationFrame(()=>setTimeout(()=>{try{init();}catch(e){console.error(e);$('loading').textContent='Something went wrong building the city: '+e.message;}},30));
