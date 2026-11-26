@@ -174,6 +174,7 @@ body.touch #bMenu{top:calc(212px + env(safe-area-inset-top));padding:6px 14px}
   <h1>Westminster <em>Streets</em></h1>
   <p>An open-world London caper. Start as a black-cab driver beneath Big Ben, run fares around Parliament, the Abbey, Buckingham Palace and the Ritz, ride the Tube to Leicester Square, Kensington or Liverpool Street, then see how long you can outrun the Met.</p>
   <div class="row"><button id="play" disabled>PLAY</button><button id="playBB" disabled>BIG BEN CLOSE-UP</button><button id="playCast" disabled>MEET THE LOCALS</button><span id="loading">Building Westminster…</span></div>
+  <div style="margin:12px 0"><a href="./geography-preview.html" style="color:inherit;text-decoration:underline">Explore the Westminster geography map</a></div>
   <div id="ctl"></div>
   <div id="rot">Turn your phone sideways for the best view.</div>
   <div id="note">A fan-made, stylised Westminster. Distances are squeezed so it all fits in one district.</div>
@@ -2525,6 +2526,68 @@ function palazzoClub(x0,z0,x1,z1,h,side,o){const W=MG(o&&o.stucco?'stucco':'paAs
  const F=faceOf(x0,z0,x1,z1,side);fBox(W,F,0,F.len,0,4.6,0,.25,2,1,W);fBox(W,F,0,F.len,h-1.6,h,0,1.1,2,1,W);fBox(W,F,0,F.len,4.6,5,0,.45);
  winRow(F,'clK',1.4,F.len-1.4,3.2,2.4);winRow(F,'clP',1.4,F.len-1.4,3.2,7.4);winRow(F,'clK',1.4,F.len-1.4,3.2,11.8);doorcase(F,F.len/2,{w:2.6,h:3.9,ped:1,steps:3,paint:'black'});
  addCol(x0,z0,x1,z1,h);if(o&&o.name)LANDMARKS.push({x:FP(F,F.len/2,3)[0],z:FP(F,F.len/2,3)[1],r:4,text:o.name});}
+// Pall Mall club exteriors: Historic England list entries 1225841, 1266151, 1225842.
+// Game plot coordinates retained deliberately; these are architectural, not survey-scale reconstructions.
+function pallMallClub(x0,z0,x1,z1,kind){
+ const P=MG('paAshlar'),Ru=MG('paRustic'),W=kind==='reform'?P:MG('stucco'),L=MG('leadR');
+ const H=kind==='reform'?23:kind==='travellers'?18.5:19.5, F=faceOf(x0,z0,x1,z1,'S');
+ const n=kind==='reform'?9:5, m=F.len/2, bay=(F.len-2)/n;
+ box(W,x0,0,z0,x1,kind==='athenaeum'?16.35:H,z1,2,1,L);
+ if(kind==='athenaeum')box(W,x0+2,16.35,z0+2,x1-2,H,z1-2,2,1,L);
+ const courses=(f,y)=>{fBox(P,f,0,f.len,y,y+.28,-.02,.35,2,1,P);};
+ const cornice=(f,y)=>{fBox(P,f,0,f.len,y,y+.45,-.02,.48,2,1,P);fBox(P,f,0,f.len,y+.45,y+.85,-.02,.78,2,1,P);for(let u=.45;u<f.len-.2;u+=.8)fBox(P,f,u-.1,u+.1,y+.12,y+.45,.28,.65,1,1,P);};
+ const quoin=(f,h)=>{for(let y=.2;y<h;y+=.8)for(const u of [0,f.len]){const w=Math.round(y/.8)%2?.65:.95;fBox(P,f,Math.max(0,u-w),Math.min(f.len,u+w),y,Math.min(y+.72,h),-.01,.17,1,1,P);}};
+ const windows=(f,bays,entry)=>{
+  const b=(f.len-2)/bays, sc=Math.min(1,b/3.4);
+  for(let i=0;i<bays;i++){
+   const u=1+(i+.5)*b,p=FP(f,u,.06);
+   if(i!==entry)addWin('clK',p[0],4.05,p[1],f.ry,sc);
+   addWin(kind==='athenaeum'?'cl':'clP',p[0],10.5,p[1],f.ry,sc);
+   if(kind==='reform')addWin('clS',p[0],17.6,p[1],f.ry,sc*.83);
+   if(kind!=='athenaeum'){const w=Math.min(1.15,b*.3);fBox(P,f,u-w,u+w,8.2,8.5,.02,.38,1,1,P);for(const off of [-w,w])fBox(P,f,u+off-.12,u+off+.12,8.5,9.25,.1,.36,1,1,P);}
+  }
+ };
+ const sides=kind==='athenaeum'?['S','E','N','W']:['S','N','W','E'];
+ for(const sd of sides){
+  const f=faceOf(x0,z0,x1,z1,sd),bays=sd==='S'||sd==='N'?n:kind==='reform'?8:kind==='athenaeum'?7:5;
+  if(kind==='athenaeum'){
+   fBox(W,f,0,f.len,0,7.3,-.01,.1,2,1,W);for(let y=.6;y<7.3;y+=.8)fBox(P,f,0,f.len,y,y+.055,.08,.13,2,1,P);
+   courses(f,7.45);courses(f,8.05);windows(f,bays,sd==='E'?Math.floor(bays/2):-1);
+   // Wedgwood-blue frieze with simplified pale relief figures, not a literal reproduction.
+   if(!MAT.athBlue)MAT.athBlue=std({color:lin(0x577b9b),roughness:.88});
+   fBox(MG('athBlue'),f,0,f.len,14.05,15.45,.02,.15,2,1,MG('athBlue'));
+   for(let u=.7;u<f.len-.4;u+=1.05){const p=FP(f,u,.22);addGeo(P,new THREE.SphereGeometry(.13,6,5),p[0],15.1,p[1]);addGeo(P,new THREE.CylinderGeometry(.12,.2,.67,6),p[0],14.68,p[1]);}
+   cornice(f,15.5);balustrade(f,0,f.len,16.35,BALU);
+  }else{
+   fBox(Ru,f,0,f.len,0,1.45,-.01,.14,2,1,Ru);quoin(f,H-.9);courses(f,1.5);courses(f,7.65);windows(f,bays,sd==='S'?(kind==='reform'?4:0):-1);cornice(f,H-.88);
+   if(kind==='reform')courses(f,15.25);
+  }
+ }
+ if(kind==='reform')doorcase(F,m,{w:2.25,h:4.8,y0:.65,steps:3,paint:'black'});
+ if(kind==='travellers')doorcase(F,1+bay*.5,{w:2.35,h:4.8,y0:.65,steps:3,paint:'black'}); // F runs east to west: first bay is viewer's right on game frontage
+ if(kind==='athenaeum'){
+  const E=faceOf(x0,z0,x1,z1,'E'),u=E.len/2;
+  doorcase(E,u,{w:2.6,h:4.6,paint:'black',steps:3});
+  for(const dx of [-3.1,-1.05,1.05,3.1]){const p=FP(E,u+dx,1.7);column(P,p[0],p[1],.45,5.35,.43,'doric');}
+  fBox(P,E,u-4,u+4,5.8,6.6,-.01,2.5,2,1,P);
+  fBox(P,E,u-4,u+4,6.6,6.85,-.01,2.7,2,1,P);
+  for(let du=-3.5;du<=3.5;du+=.46)if(Math.abs(du)>.65){const p=FP(E,u+du,2.28);BALU.push([p[0],6.85,p[1]]);}
+  fBox(P,E,u-4,u+4,7.65,7.85,2.05,2.55,2,1,P);
+  fBox(P,E,u-.65,u+.65,6.85,8.05,1.75,2.5,1,1,P);
+  const a=FP(E,u,2.13),gold=MG('gilt');
+  // Lightweight stylised Athena: draped figure, helmet, spear and circular shield.
+  addGeo(gold,new THREE.CylinderGeometry(.21,.5,1.55,12),a[0],8.82,a[1]);
+  addGeo(gold,new THREE.SphereGeometry(.25,12,8),a[0],9.78,a[1]);
+  addGeo(gold,new THREE.ConeGeometry(.29,.38,12),a[0],10.07,a[1]);
+  const p=FP(E,u+.48,2.24);addGeo(gold,new THREE.CylinderGeometry(.035,.035,2.7,8),p[0],9.38,p[1]);
+  const q=FP(E,u-.43,2.44);addGeo(gold,new THREE.CylinderGeometry(.42,.42,.12,16).rotateZ(Math.PI/2),q[0],8.95,q[1]);
+  // Set back the attic behind the parapet (the base volume stops below it).
+ }
+ const names={reform:"104 Pall Mall — Reform Club, Charles Barry, 1837–41",travellers:"106 Pall Mall — Travellers Club, Charles Barry, 1828–32",athenaeum:"107 Pall Mall — Athenaeum, Decimus Burton, 1826–30"};
+ const p=FP(F,m,2);LANDMARKS.push({x:p[0],z:p[1],r:5,text:names[kind]});
+ addCol(x0,z0,x1,z1,H);
+}
+
 function stJamesDistrict(){districtMats();stjMats();
  // Marlborough Road and Pall Mall (inner streets); St James's Street up to Piccadilly
  roadStrip(-430,-722,-300,-710);roadStrip(-362,-788,-350,-722);roadStrip(-300,-722,-185,-710);
@@ -2534,8 +2597,8 @@ function stJamesDistrict(){districtMats();stjMats();
  // Pall Mall north side: the clubs
  palazzoClub(-430,-788,-400,-722,18,'S',{name:'Pall Mall — the street of gentlemen\'s clubs'});palazzoClub(-400,-788,-362,-722,20,'S',{stucco:1});
  palazzoClub(-350,-788,-326,-722,19,'S',{});palazzoClub(-326,-788,-300,-722,21,'S',{stucco:1});
- palazzoClub(-300,-788,-262,-722,21,'S',{name:'The Reform Club — Sir Charles Barry, 1837–41, modelled on Rome\'s Palazzo Farnese'});palazzoClub(-262,-788,-232,-722,20,'S',{name:'The Travellers Club — Barry, 1832'});
- palazzoClub(-232,-788,-185,-722,21,'S',{stucco:1,name:'The Athenaeum — Decimus Burton, 1830, with its gilded Athena over the porch'});
+ pallMallClub(-300,-788,-262,-722,'reform');pallMallClub(-262,-788,-232,-722,'travellers');
+ pallMallClub(-232,-788,-185,-722,'athenaeum');
  // Waterloo Place / Duke of York Steps / Carlton House Terrace
  carltonTerrace(-300,-250,-606,-578);carltonTerrace(-230,-185,-606,-578);
  for(let i=0;i<10;i++)box(MG('granite'),-250,0,-578-i*1.4-1.4,-230,i*.6+.6,-578-i*1.4,1,1,MG('granite'));
