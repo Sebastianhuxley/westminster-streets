@@ -1488,7 +1488,7 @@ function parliamentSquare(){const BR=0x4a3b2a;const coat={type:'coat',col:BR},ba
   const h=id==='LINCOLN'?4.2:3.4;plinth(x,z,ry,h,stone,lines);
   let extra=null;if(id==='LINCOLN'){const c=new THREE.BoxGeometry(.7,.9,.6);c.translate(0,.45,-.55);const cb=new THREE.BoxGeometry(.7,.9,.08);cb.translate(0,1.2,-.82);extra=[c,cb];}
   const om=poseStatue(d,pose,x,z,ry,h,id==='FAWCETT'?1.75:1.6,extra);BRONZE.push({om,x,z,ry,h,id,fem:!!d.fem});}
- squareTurf(SQUARE_LAWNS[1]);}
+ plane(MG('grass'),-128,-150,-114,-104,.04,8);tufts(-127,-149,-115,-105,.5);}
 // ---- K2 and K6 telephone kiosks ----
 // K2 (1926, c1927 here) and K6 (1935) kiosks by Giles Gilbert Scott, as listed outside the former HM Treasury:
 // two K2s and two K6s on Great George Street (the K6 pair in the corners of the recessed entrance), four K6s on the west side of Whitehall.
@@ -4308,29 +4308,6 @@ function buildGrassMask(){const W=Math.ceil(960/GRS.res),H=Math.ceil(960/GRS.res
  for(const k in MERG){const kb=k.includes('|')?k.split('|')[1]:k;if(['pathM','granite','gravel','flowerR','pond','water'].includes(kb))ras(MERG[k].p,0);}
  for(const l of LANDMARKS){const r=1.6;for(let dz=-r;dz<=r;dz+=GRS.res)for(let dx=-r;dx<=r;dx+=GRS.res){const xi=Math.floor((l.x+dx-GRS.x0)/GRS.res),zi=Math.floor((l.z+dz-GRS.z0)/GRS.res);if(xi>=0&&zi>=0&&xi<W&&zi<H)GRS.m[zi*W+xi]=0;}}}
 function grassAt(x,z){const xi=Math.floor((x-GRS.x0)/GRS.res),zi=Math.floor((z-GRS.z0)/GRS.res);return xi>=0&&zi>=0&&xi<GRS.w&&zi<GRS.h&&GRS.m[zi*GRS.w+xi]===1;}
-const SQUARE_LAWNS=[[-90,-148,-40,-97],[-128,-150,-114,-104]];
-function squareLawnAt(x,z){
- return SQUARE_LAWNS.find(([x0,z0,x1,z1])=>x>=x0&&x<=x1&&z>=z0&&z<=z1);
-}
-function squareLawnHeight(x,z,plot){
- const [x0,z0,x1,z1]=plot;
- const edge=clamp(Math.min(x-x0,x1-x,z-z0,z1-z)/1.7,0,1);
- // Centimetre-scale hollows and crowns taper to the pavement.
- const churchill=clamp((Math.max(Math.abs(x+44)-1.65,Math.abs(z+144)-1.85))/.9,0,1);
- const relief=.023*Math.sin(x*.47+z*.27)+.013*Math.sin(z*.91-x*.31)+.006*Math.cos(x*1.9+z*1.37);
- return .04+edge*edge*(3-2*edge)*churchill*clamp(relief,-.034,.034);
-}
-function squareTurf(plot){
- const [x0,z0,x1,z1]=plot;
- const geometry=new THREE.PlaneGeometry(x1-x0,z1-z0,Math.ceil((x1-x0)*2),Math.ceil((z1-z0)*2));
- geometry.rotateX(-PI/2);geometry.translate((x0+x1)/2,0,(z0+z1)/2);
- const pos=geometry.attributes.position,uv=geometry.attributes.uv;
- for(let i=0;i<pos.count;i++){
-   const x=pos.getX(i),z=pos.getZ(i);
-   pos.setY(i,squareLawnHeight(x,z,plot));uv.setXY(i,x/8,-z/8);
- }
- geometry.computeVertexNormals();MG('grass').geo(geometry);geometry.dispose();
-}
 function grassClumpGeo(){const P=[],C=[],U=[],I=[];const n=30;let v=0;
  for(let b=0;b<n;b++){const a=Math.random()*PI*2,r=Math.sqrt(Math.random())*.2,ox=Math.cos(a)*r,oz=Math.sin(a)*r,face=Math.random()*PI,h=.06+Math.random()*.1,w=.016+Math.random()*.012,bend=(Math.random()-.2)*.12,ba=Math.random()*PI*2;
   const tone=.8+Math.random()*.4,yl=Math.random()*.25;const fx=Math.cos(face),fz=Math.sin(face);
@@ -4385,45 +4362,26 @@ function setupGrass(){if(!GRS.m)buildGrassMask();const geo=grassClumpGeo();const
  mat.onBeforeCompile=sh=>{sh.uniforms.uTime=WINDT;sh.uniforms.uCam={value:camera.position};sh.uniforms.uR={value:GRS.R};
   sh.vertexShader='uniform float uTime,uR;uniform vec3 uCam;\n'+sh.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
  vec3 ip=vec3(instanceMatrix[3][0],0.,instanceMatrix[3][2]);float dc=length(ip.xz-uCam.xz);float fade=1.-smoothstep(uR*.3,uR,dc);transformed.y*=fade;
- float t=uv.y;float sw=(sin(uTime*1.6+ip.x*.35+ip.z*.27)*.6+sin(uTime*4.1+ip.x*1.7+position.x*9.)*.25)*.045*t*t*min(1.,length(instanceMatrix[1].xyz)*1.5);transformed.x+=sw;transformed.z+=sw*.7;`)
+ float t=uv.y;float sw=(sin(uTime*1.6+ip.x*.35+ip.z*.27)*.6+sin(uTime*4.1+ip.x*1.7+position.x*9.)*.25)*.045*t*t;transformed.x+=sw;transformed.z+=sw*.7;`)
    .replace('#include <beginnormal_vertex>','#include <beginnormal_vertex>\nobjectNormal=normalize(vec3(0.,1.,0.)+vec3(position.x,0.,position.z)*1.5);');};
  mat.customProgramCacheKey=()=>'grassblades';GRS.max=LOWQ?3000:8000;const im=new THREE.InstancedMesh(geo,mat,GRS.max);im.count=0;im.frustumCulled=false;im.receiveShadow=true;scene.add(im);GRS.im=im;
  // lawn texture: finer blades and world-space patchiness (mown stripes, worn and lush patches) instead of a flat green
  const T2=ctex(512,512,(g,w,h)=>{g.fillStyle='#46702e';g.fillRect(0,0,w,h);for(let i=0;i<26000;i++){const x=Math.random()*w,y=Math.random()*h,l=2+Math.random()*6;g.strokeStyle=['#5f8f3c','#2f5220','#77a34a','#3d6428','#8aa856'][i%5];g.globalAlpha=.35+Math.random()*.4;g.lineWidth=1;g.beginPath();g.moveTo(x,y);g.lineTo(x+(Math.random()-.5)*2,y-l);g.stroke();}g.globalAlpha=1;});
- T2.anisotropy=ANISO;MAT.grass.map=T2;MAT.grass.needsUpdate=true;
+ T2.repeat.set(1,1);MAT.grass.map=T2;MAT.grass.needsUpdate=true;
  const GPT=new THREE.TextureLoader().load(document.getElementById('pdgrass').textContent);GPT.wrapS=GPT.wrapT=THREE.RepeatWrapping;GPT.anisotropy=ANISO;
  const prev=MAT.grass.onBeforeCompile;MAT.grass.onBeforeCompile=function(sh,r){if(prev)prev.call(this,sh,r);sh.uniforms.uGP={value:GPT};sh.fragmentShader='uniform sampler2D uGP;\n'+sh.fragmentShader;sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vGW;').replace('#include <fog_vertex>','#include <fog_vertex>\nvGW=(modelMatrix*vec4(transformed,1.)).xyz;');
   sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vGW;float gh(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}float gn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(gh(i),gh(i+vec2(1,0)),f.x),mix(gh(i+vec2(0,1)),gh(i+vec2(1,1)),f.x),f.y);}')
    .replace('#include <map_fragment>',`#include <map_fragment>
  {vec2 q=vGW.xz;vec3 g1=texture2D(uGP,q/3.3).rgb,g2=texture2D(uGP,mat2(.8,-.6,.6,.8)*q/5.1+.37).rgb;float bm=gn(q*.11)*.7+gn(q*.37)*.3;diffuseColor.rgb=pow(mix(g1,g2,smoothstep(.35,.65,bm)),vec3(2.2))*1.05;}
  {vec2 p=vGW.xz;float big=gn(p*.04)*.6+gn(p*.13)*.4,fine=gn(p*1.3);float stripe=step(.5,fract((p.x+p.y*.15)/4.));diffuseColor.rgb*=mix(.78,1.14,big)*(.94+.12*fine)*(1.+.06*stripe);
-  diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(1.25,1.08,.7),smoothstep(.62,.85,gn(p*.07+3.))*.6);
-  if(p.x>-128.&&p.x<-40.&&p.y>-150.&&p.y<-97.){
-    float wear=smoothstep(.63,.84,gn(p*.23)*.73+gn(p*.94)*.27);
-    float mowing=sin((p.y+p.x*.08)*2.05)*.035;
-    diffuseColor.rgb*=vec3(.78,.90,.81)*(1.+mowing);
-    diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(1.24,1.02,.85),wear*.65);
-  } }`)
-  .replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
- {vec2 p=vGW.xz;
-  if(p.x>-128.&&p.x<-40.&&p.y>-150.&&p.y<-97.){
-    float grain=texture2D(uGP,p/2.1).g*.032;
-    vec3 sx=dFdx(-vViewPosition),sy=dFdy(-vViewPosition);
-    vec3 r1=cross(sy,normal),r2=cross(normal,sx);
-    float det=dot(sx,r1);
-    if(abs(det)>1e-8)normal=normalize(abs(det)*normal-sign(det)*(dFdx(grain)*r1+dFdy(grain)*r2)*(1.-smoothstep(12.,32.,length(vViewPosition))));
-  }}`);};
- MAT.grass.customProgramCacheKey=()=>'lawn4';}
+  diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(1.25,1.08,.7),smoothstep(.62,.85,gn(p*.07+3.))*.6);}`);};
+ MAT.grass.customProgramCacheKey=()=>'lawn3';}
 const _gm=new THREE.Matrix4(),_gq=new THREE.Quaternion(),_gs=new V3(),_gp=new V3(),_gy=new V3(0,1,0);
 function updateGrass(){if(!GRS.im)return;const C=camera.position;GRS.im.visible=!(player&&player.ug)&&C.y<60;if(!GRS.im.visible)return;
  if(Math.hypot(C.x-GRS.cx,C.z-GRS.cz)<1.6)return;GRS.cx=C.x;GRS.cz=C.z;const R=GRS.R,s=LOWQ?.4:.3;let n=0;
  const i0=Math.floor((C.x-R)/s),i1=Math.ceil((C.x+R)/s),j0=Math.floor((C.z-R)/s),j1=Math.ceil((C.z+R)/s);
  for(let j=j0;j<=j1&&n<GRS.max;j++)for(let i=i0;i<=i1&&n<GRS.max;i++){const h1=Math.sin(i*127.1+j*311.7)*43758.5453,r1=h1-Math.floor(h1),h2=Math.sin(i*269.5+j*183.3)*43758.5453,r2=h2-Math.floor(h2);
-  const x=(i+r1)*s,z=(j+r2)*s;if((x-C.x)**2+(z-C.z)**2>R*R||!grassAt(x,z))continue;const plot=squareLawnAt(x,z);
-  if(plot&&(!grassAt(x-.16,z)||!grassAt(x+.16,z)||!grassAt(x,z-.16)||!grassAt(x,z+.16)))continue;
-  _gq.setFromAxisAngle(_gy,r1*6.283);const k=.8+r2*.6;
-  const y=plot?squareLawnHeight(x,z,plot):.04;
-  _gm.compose(_gp.set(x,y,z),_gq,_gs.set(k,plot ? .22+r1*.21 : .8+r1*.7,k));GRS.im.setMatrixAt(n++,_gm);}
+  const x=(i+r1)*s,z=(j+r2)*s;if((x-C.x)**2+(z-C.z)**2>R*R||!grassAt(x,z))continue;_gq.setFromAxisAngle(_gy,r1*6.283);const k=.8+r2*.6;_gm.compose(_gp.set(x,.04,z),_gq,_gs.set(k,.8+r1*.7,k));GRS.im.setMatrixAt(n++,_gm);}
  GRS.im.count=n;GRS.im.instanceMatrix.needsUpdate=true;}
 
 let flagMesh;
@@ -4497,9 +4455,8 @@ function buildWorld(){
  for(const [a,b] of segs){box(MG('wall'),58.6,-6,a,60.2,1,b,3,1.2,MG('wall'));box(MG('wall'),259.8,-6,a,261.4,1,b,3,1.2,MG('wall'));addCol(58.6,a,261.4,b,-1);}
  bridge(-160,14,'green');bridge(330,13,'redpaint');
  const GR=MG('grass');
- const parks=[[-560,-548,-116,-170],[-15,138,56,313],[262,-430,280,-300],[-212,42,-136,138]];
+ const parks=[[-560,-548,-116,-170],[-90,-148,-40,-97],[-15,138,56,313],[262,-430,280,-300],[-212,42,-136,138]];
  parks.forEach(p=>plane(GR,p[0],p[1],p[2],p[3],.04,8));
- squareTurf(SQUARE_LAWNS[0]);
  const lake=new THREE.CircleGeometry(1,48);lake.rotateX(-PI/2);lake.scale(150,1,34);lake.translate(-330,.1,-360);MG('pond').geo(lake);
  palaceHQ();bigBen(42,-140);abbeyHQ();centralHall();supremeCourt();whitehallHQ();streetHQ();
  // 70 Whitehall, the Cabinet Office: Barry's 1845–47 Italianate front, rusticated ground floor, engaged Corinthian columns
@@ -4533,8 +4490,8 @@ function buildWorld(){
  // trees
  for(let i=0;i<150;i++){const x=rr(-550,-125),z=rr(-540,-180);if(((x+330)/160)**2+((z+360)/42)**2<1)continue;TREES.push([x,z]);}
  BIRDS=stJamesPark();vtGardens();
- const inLake=(x,z)=>((x+330)/155)**2+((z+360)/38)**2<1;
- tufts(-214,-71.6,-66,-52,.4);tufts(-15,138,56,313,.2,(x,z)=>x>13&&x<21);tufts(-560,-548,-116,-170,.06,inLake);tufts(-212,42,-136,138,.2);tufts(262,-430,280,-300,.3);
+ const inLake=(x,z)=>((x+330)/155)**2+((z+360)/38)**2<1,stat=(x,z)=>LANDMARKS.some(l=>Math.hypot(l.x-x,l.z-z)<2);
+ tufts(-90,-148,-40,-97,.6,stat);tufts(-214,-71.6,-66,-52,.4);tufts(-15,138,56,313,.2,(x,z)=>x>13&&x<21);tufts(-560,-548,-116,-170,.06,inLake);tufts(-212,42,-136,138,.2);tufts(262,-430,280,-300,.3);
  for(let x=-76;x<=-46;x+=10)TREES.push([x,-98.6]);
  for(let z=-540;z<=-185;z+=14){if(Math.abs(z+470)<6||(z>-266&&z<-232))continue;TREES.push([57.6,z]);}for(let z=150;z<=306;z+=12)TREES.push([52,z]);for(let i=0;i<16;i++)TREES.push([rr(-8,44),rr(150,306)]);
  for(let z=-540;z<=306;z+=13){if(z>-372&&z<-306)continue;if(z>-180&&z<-140)continue;TREES.push([270,z]);}
@@ -5763,7 +5720,7 @@ const mini=$('mini'),mctx=mini.getContext('2d');let MS=1;
 function sizeMini(){const r=mini.getBoundingClientRect();MS=Math.min(2,devicePixelRatio||1);mini.width=Math.max(1,r.width*MS);mini.height=Math.max(1,r.height*MS);}
 const MAPC=document.createElement('canvas');let MOX=-900,MOZ=-900;MAPC.width=1680;MAPC.height=1620;function setMapOrigin(x,z){const nx=Math.abs(x)<900&&Math.abs(z)<900?-900:x-840,nz=Math.abs(x)<900&&Math.abs(z)<900?-900:z-810;if(nx!==MOX||nz!==MOZ){MOX=nx;MOZ=nz;drawMap();}}
 function drawMap(){const g=MAPC.getContext('2d');g.fillStyle='#262a2e';g.fillRect(0,0,MAPC.width,MAPC.height);const X=x=>x-MOX,Z=z=>z-MOZ;
- g.fillStyle='#2f5a34';[[-560,-548,-116,-170],[-15,138,56,313],[262,-430,280,-300],[-212,42,-136,138]].forEach(p=>g.fillRect(X(p[0]),Z(p[1]),p[2]-p[0],p[3]-p[1]));
+ g.fillStyle='#2f5a34';[[-560,-548,-116,-170],[-90,-148,-40,-97],[-15,138,56,313],[262,-430,280,-300],[-212,42,-136,138]].forEach(p=>g.fillRect(X(p[0]),Z(p[1]),p[2]-p[0],p[3]-p[1]));
  g.fillStyle='#2b6a8e';g.fillRect(X(60),0,200,MAPC.height);g.beginPath();g.ellipse(X(-330),Z(-360),150,34,0,0,7);g.fill();
  g.fillStyle='#3d4349';COL.forEach(c=>{if(c.h>0&&c.x1-c.x0<400&&c.z1-c.z0<400)g.fillRect(X(c.x0),Z(c.z0),c.x1-c.x0,c.z1-c.z0);});
  g.fillStyle='#9aa1a8';EDGES.forEach(e=>{const [ax,az]=NODES[e.a],[bx,bz]=NODES[e.b],hw=e.w/2;g.fillRect(X(Math.min(ax,bx)-hw),Z(Math.min(az,bz)-hw),Math.abs(bx-ax)+e.w,Math.abs(bz-az)+e.w);});
