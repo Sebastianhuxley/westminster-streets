@@ -1398,18 +1398,18 @@ function poseStatue(d,pose,x,z,ry,base,sc,extra){const B=buildPerson(d);const pa
 function plinth(x,z,ry,h,stone,lines){const G=MG(stone==='slate'?'ironB':'granite');box(G,x-1.35,0,z-1.35,x+1.35,.55,z+1.35,1,1,G);box(G,x-.95,.55,z-.95,x+.95,h-.45,z+.95,1,1,G);box(G,x-1.15,h-.45,z-1.15,x+1.15,h,z+1.15,1,1,G);box(G,x-1.2,.55,z-1.2,x+1.2,.75,z+1.2,1,1,G);
  const pl=new THREE.Mesh(new THREE.PlaneGeometry(1.55,.48),std({map:nameTex(lines,stone==='slate'?'#2c2f33':null),roughness:.6,metalness:.2}));const fx=Math.sin(ry),fz=Math.cos(ry);pl.position.set(x+fx*.96,h*.55,z+fz*.96);pl.rotation.y=ry;scene.add(pl);addCol(x-1.35,z-1.35,x+1.35,z+1.35,h);}
 function churchillMonument(x,z,ry,description,pose){
- const height=3.57;
+ const height=2.55;
  const fallback=new THREE.Group();
  fallback.position.set(x,0,z);fallback.rotation.y=ry;scene.add(fallback);
- const stone=new THREE.Mesh(new THREE.BoxGeometry(1.86,3.46,1.46),MAT.granite);
- stone.position.y=1.73;stone.castShadow=stone.receiveShadow=true;fallback.add(stone);
- const footing=new THREE.Mesh(new THREE.BoxGeometry(1.68,.11,1.31),MAT.ironB);
- footing.position.y=3.515;fallback.add(footing);
+ const stone=new THREE.Mesh(new THREE.BoxGeometry(1.86,2.44,1.78),MAT.granite);
+ stone.position.y=1.22;stone.castShadow=stone.receiveShadow=true;fallback.add(stone);
+ const footing=new THREE.Mesh(new THREE.BoxGeometry(1.74,.11,1.55),MAT.ironB);
+ footing.position.y=2.495;fallback.add(footing);
  const figure=poseStatue(description,pose,x,z,ry,height,1.85);
- addCol(x-.73,z-.93,x+.73,z+.93,height);
+ addCol(x-.89,z-.93,x+.89,z+.93,height);
  plane(MG('granite'),x-1.65,z-1.85,x+1.65,z+1.85,.051,1.15);
  if(!THREE.GLTFLoader)return;
- mkGLTF().load('churchill-monument.glb',({scene:model})=>{
+ mkGLTF().load('churchill-monument.glb?v=2',({scene:model})=>{
    const detail=model.getObjectByName('Churchill_detail');
    const distance=model.getObjectByName('Churchill_distance');
    if(!detail||!distance)return;

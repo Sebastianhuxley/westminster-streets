@@ -28,3 +28,5 @@ Nearby BMWs sample the road height at each wheel. The body follows kerbs and cam
 ## Churchill monument
 
 The Parliament Square monument uses a custom reference-based 3D sculpt of Ivor Roberts-Jones's statue. It includes the greatcoat, cane, dark bronze footing and granite plinth with the inscription cut into the mesh. The game switches between a detailed and simplified casting by distance. The sculpture uses vertex-colour patina and a tiled bump texture for the cast finish.
+
+The sculpt follows the 3.66 m bronze and 2.44 m plinth documented by [Historic England](https://historicengland.org.uk/listing/the-list/list-entry/1392374?section=official-list-entry). The stance, coat, cane and lettering were checked against [photographs of the Parliament Square casting](https://commons.wikimedia.org/wiki/Category:Statue_of_Winston_Churchill,_Parliament_Square,_London).
