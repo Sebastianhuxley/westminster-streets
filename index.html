@@ -3107,7 +3107,8 @@ function skyline(){
  const water=(x,z)=>(x>40&&x<280&&z>-950&&z<1900)||(z>-1160&&z<-930&&x>40&&x<3800)||(z>1780&&z<1920&&x<280&&x>-2600);
  const box1=new THREE.BoxGeometry(1,1,1);box1.translate(0,.5,0);const fm=std({map:TWIN,color:lin(0x9a9a94),roughness:.85,emissive:new THREE.Color(1,.86,.62),emissiveMap:TWIN,emissiveIntensity:0});fm.userData.winK=.45;SKYM.push(fm);
  const N=LOWQ?500:1100,im=new THREE.InstancedMesh(box1,fm,N),M4=new THREE.Matrix4();let k=0;for(let t=0;t<N*4&&k<N;t++){const a=Math.random()*PI*2,r=920+Math.pow(Math.random(),.7)*3600,x=Math.cos(a)*r,z=-150+Math.sin(a)*r;
-  if(water(x,z)||(Math.abs(x)<900&&Math.abs(z)<900)||inIsland(x,z,70))continue;const city=Math.hypot(x-2900,z+1600)<700,cw=Math.hypot(x-7300,z+600)<500;const h=(city?50+Math.random()*90:cw?60+Math.random()*80:14+Math.random()*24)*(Math.random()<.06?2:1);const w=18+Math.random()*40,dz=18+Math.random()*40;
+  // Exclude the expanded playable west end from procedural background towers.
+  if(water(x,z)||(x>-1450&&x<900&&Math.abs(z)<1050)||inIsland(x,z,70))continue;const city=Math.hypot(x-2900,z+1600)<700,cw=Math.hypot(x-7300,z+600)<500;const h=(city?50+Math.random()*90:cw?60+Math.random()*80:14+Math.random()*24)*(Math.random()<.06?2:1);const w=18+Math.random()*40,dz=18+Math.random()*40;
   M4.makeScale(w,h,dz);M4.setPosition(x,0,z);im.setMatrixAt(k++,M4);}im.count=k;im.frustumCulled=false;scene.add(im);
  // the Thames beyond the map: east past Waterloo to the City, south-west to Battersea
  for(const [x0,z0,x1,z1] of [[262,-1160,3800,-930],[58,-1160,262,-900],[58,900,262,1920],[-2600,1780,58,1920]]){plane(MG('river'),x0,z0,x1,z1,-3.2,70);plane(MG('bed'),x0,z0,x1,z1,-6,10);}}
